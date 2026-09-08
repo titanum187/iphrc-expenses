@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>مصروفات الهيئة 2026</title>
+<title>مصروفات الهيئة</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
@@ -77,6 +77,14 @@
   }
   .tab:hover{color:var(--teal);}
   .tab.active{color:var(--teal);border-bottom-color:var(--gold);}
+
+  .year-switcher{display:flex;align-items:center;gap:6px;margin-bottom:10px;}
+  .year-pill{
+    padding:5px 14px;border-radius:20px;font-size:12.5px;font-weight:700;
+    border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;
+  }
+  .year-pill.active{background:var(--teal);color:#fff;border-color:var(--teal);}
+  .year-pill.add{border-style:dashed;color:var(--teal);}
   .tab .dot{
     display:inline-block;width:6px;height:6px;border-radius:50%;
     background:var(--gold);margin-inline-start:6px;vertical-align:middle;
@@ -204,6 +212,8 @@
   .month-card .m-name{font-weight:700;color:var(--teal);font-size:14px;margin-bottom:8px;}
   .month-card .m-total{font-size:18px;font-weight:700;}
   .month-card .m-count{font-size:11.5px;color:var(--muted);margin-top:4px;}
+  .m-bar-track{height:5px;background:var(--paper);border-radius:3px;margin-top:8px;overflow:hidden;}
+  .m-bar-fill{height:100%;background:var(--teal);border-radius:3px;transition:width .3s;}
   @media(max-width:820px){.month-grid{grid-template-columns:repeat(2,1fr);}}
 
   .save-flag{
@@ -392,31 +402,35 @@ function renderLogin(users){
   app.innerHTML = `
     <div class="auth-wrap"><div class="auth-card">
       <div class="auth-logo">
-        <img src="data:image/png;base64,${LOGO_B64}" alt="شعار الهيئة">
-        <div class="org">الهيئة الدائمة المستقلة لحقوق الإنسان<br>منظمة التعاون الإسلامي</div>
+        <img src="data:image/png;base64,${LOGO_B64}" alt="${t('orgName')}">
+        <div class="org">${t('orgName')}</div>
       </div>
-      <h2>تسجيل الدخول</h2>
-      <div class="auth-hint">نظام مصروفات ومشتريات الهيئة — 2026</div>
+      <h2>${t('login')}</h2>
+      <div class="auth-hint">${t('appSystemName')}</div>
       <div id="loginError"></div>
-      <div class="field"><label>اسم المستخدم</label><input id="liUser" type="text" style="direction:ltr;text-align:left;" autofocus></div>
-      <div class="field"><label>كلمة المرور</label><input id="liPass" type="password" style="direction:ltr;text-align:left;"></div>
-      <button class="primary full" id="liBtn">دخول</button>
-      <button class="ghost full" id="liRefresh" style="margin-top:6px;">تحديث قائمة الحسابات</button>
-      <div class="security-note">
-        أول مرة؟ استخدم حساب المدير المدمج: <span class="num" style="font-family:inherit;">admin</span> / <span class="num" style="font-family:inherit;">iphrc2026</span> ثم أنشئ حسابات فريقك من «إدارة المستخدمين» وغيّر كلمة مرورك.
+      <div class="field"><label>${t('username')}</label><input id="liUser" type="text" style="direction:ltr;text-align:left;" autofocus></div>
+      <div class="field"><label>${t('password')}</label><input id="liPass" type="password" style="direction:ltr;text-align:left;"></div>
+      <button class="primary full" id="liBtn">${t('loginBtn')}</button>
+      <button class="ghost full" id="liRefresh" style="margin-top:6px;">${t('refreshAccounts')}</button>
+      <div style="text-align:center;margin-top:14px;">
+        <button class="ghost sm" id="liLangToggle" style="padding:6px 14px;">${currentLang==='en' ? 'العربية' : 'English'}</button>
       </div>
     </div></div>
   `;
+  document.getElementById('liLangToggle').onclick = ()=>{
+    setLang(currentLang === 'en' ? 'ar' : 'en');
+    renderLogin(users);
+  };
   const doLogin = async ()=>{
     const uname = document.getElementById('liUser').value.trim().toLowerCase();
     const pass = document.getElementById('liPass').value;
     const errBox = document.getElementById('loginError');
     errBox.innerHTML = '';
-    if(!uname || !pass){ errBox.innerHTML = '<div class="auth-error">أدخل اسم المستخدم وكلمة المرور.</div>'; return; }
+    if(!uname || !pass){ errBox.innerHTML = `<div class="auth-error">${currentLang==='en'?'Enter your username and password.':'أدخل اسم المستخدم وكلمة المرور.'}</div>`; return; }
     const user = users.find(u=>u.username===uname);
-    if(!user){ errBox.innerHTML = '<div class="auth-error">اسم المستخدم غير موجود. تحقق من كتابته (بدون مسافات، حروف صغيرة).</div>'; return; }
+    if(!user){ errBox.innerHTML = `<div class="auth-error">${currentLang==='en'?'Username not found. Check spelling (no spaces, lowercase).':'اسم المستخدم غير موجود. تحقق من كتابته (بدون مسافات، حروف صغيرة).'}</div>`; return; }
     const h = hashPass(pass);
-    if(h !== user.passHash){ errBox.innerHTML = '<div class="auth-error">كلمة المرور غير صحيحة.</div>'; return; }
+    if(h !== user.passHash){ errBox.innerHTML = `<div class="auth-error">${currentLang==='en'?'Incorrect password.':'كلمة المرور غير صحيحة.'}</div>`; return; }
     currentUser = {username: user.username, displayName: user.displayName, role: user.role};
     await startApp();
   };
@@ -424,7 +438,9 @@ function renderLogin(users){
     const fresh = await loadUsers(true);
     users = fresh;
     const errBox = document.getElementById('loginError');
-    errBox.innerHTML = '<div class="security-note" style="color:var(--ok);">تم تحديث قائمة الحسابات (' + fresh.length + ' حساب).</div>';
+    errBox.innerHTML = currentLang==='en'
+      ? `<div class="security-note" style="color:var(--ok);">Account list updated (${fresh.length} accounts).</div>`
+      : '<div class="security-note" style="color:var(--ok);">تم تحديث قائمة الحسابات (' + fresh.length + ' حساب).</div>';
   };
   document.getElementById('liBtn').onclick = doLogin;
   document.getElementById('liPass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
@@ -450,6 +466,93 @@ function logout(){
    ملاحظة مهمة: التخزين المحلي (localStorage) خاص بهذا المتصفح/الجهاز
    فقط وليس مشتركًا بين أعضاء الفريق تلقائيًا كما هو حال جسر Claude.
    ========================================================= */
+/* =========================================================
+   الترجمة (عربي / إنجليزي)
+   يُترجَم هيكل الواجهة فقط (عناوين، أزرار، رؤوس جداول) — بيانات
+   المصروفات نفسها (أسماء الموردين، التفاصيل، الملاحظات) تبقى كما
+   أدخلها المستخدم بأي لغة كتبها بها.
+   ========================================================= */
+let currentLang = 'ar';
+try{ currentLang = window.localStorage.getItem('iphrc-expenses-2026::lang') || 'ar'; }catch(e){}
+
+const TRANSLATIONS = {
+  orgName: {ar:'الهيئة الدائمة المستقلة لحقوق الإنسان — منظمة التعاون الإسلامي', en:'Independent Permanent Human Rights Commission — OIC'},
+  appTitle: {ar:'مصروفات ومشتريات الهيئة', en:'Commission Expenses & Purchases'},
+  appSystemName: {ar:'نظام مصروفات ومشتريات الهيئة', en:'Commission Expense Tracking System'},
+  yearTotal: {ar:'إجمالي السنة', en:'Year total'},
+  operations: {ar:'عملية', en:'entries'},
+  lastUpdate: {ar:'آخر تحديث', en:'last updated'},
+  refresh: {ar:'🔄 تحديث', en:'🔄 Refresh'},
+  search: {ar:'🔍 بحث', en:'🔍 Search'},
+  exportBackup: {ar:'تنزيل نسخة احتياطية (JSON)', en:'Download backup (JSON)'},
+  importBackup: {ar:'استيراد نسخة احتياطية', en:'Import backup'},
+  manageEmployees: {ar:'إدارة الموظفين', en:'Manage employees'},
+  manageUsers: {ar:'إدارة المستخدمين', en:'Manage users'},
+  cloudSync: {ar:'المزامنة السحابية', en:'Cloud sync'},
+  activityLog: {ar:'سجل النشاط', en:'Activity log'},
+  changePassword: {ar:'تغيير كلمة المرور', en:'Change password'},
+  logout: {ar:'تسجيل الخروج', en:'Log out'},
+  admin: {ar:'مدير', en:'Admin'},
+  member: {ar:'موظف', en:'Member'},
+  summary: {ar:'الملخص', en:'Summary'},
+  addYear: {ar:'+ سنة جديدة', en:'+ New year'},
+  totalExpenses: {ar:'إجمالي المصروفات', en:'Total expenses'},
+  paid: {ar:'المسدد', en:'Paid'},
+  unpaid: {ar:'غير المسدد', en:'Unpaid'},
+  entryCount: {ar:'عدد العمليات', en:'Number of entries'},
+  monthlyTotals: {ar:'إجمالي المصروفات شهريًا', en:'Monthly totals'},
+  clickToOpen: {ar:'اضغط على أي شهر لفتحه', en:'Click a month to open it'},
+  annualByEmployee: {ar:'الإجمالي السنوي حسب الموظف', en:'Annual total by employee'},
+  employee: {ar:'الموظف', en:'Employee'},
+  annualSpent: {ar:'إجمالي المصروف السنوي', en:'Total annual spend'},
+  annualAdvance: {ar:'إجمالي المقدّمات المستلمة', en:'Total advances received'},
+  diffAdvSpend: {ar:'الفرق (المقدّم − المصروف)', en:'Difference (advance − spend)'},
+  monthExpenseLog: {ar:'سجل مصروفات', en:'Expense log for'},
+  exportCsv: {ar:'تصدير CSV', en:'Export CSV'},
+  colNum: {ar:'م', en:'#'},
+  colStatus: {ar:'الحالة', en:'Status'},
+  colDate: {ar:'التاريخ', en:'Date'},
+  colInvoice: {ar:'رقم الفاتورة', en:'Invoice #'},
+  colVendor: {ar:'اسم المورّد', en:'Vendor'},
+  colDetails: {ar:'التفاصيل', en:'Details'},
+  colAmount: {ar:'المبلغ', en:'Amount'},
+  colEmployee: {ar:'الموظف المسؤول', en:'Assigned employee'},
+  colNotes: {ar:'ملاحظات', en:'Notes'},
+  colReceipt: {ar:'مسح الفاتورة', en:'Scan invoice'},
+  total: {ar:'الإجمالي', en:'Total'},
+  emptyMonth: {ar:'لا توجد عمليات مسجّلة بعد لهذا الشهر — اضغط «إضافة عملية» للبدء.', en:'No entries recorded yet for this month — click "Add entry" to start.'},
+  addEntry: {ar:'+ إضافة عملية', en:'+ Add entry'},
+  empSummaryTitle: {ar:'ملخص حسب الموظف — المصروف مقابل المقدّم النقدي', en:'Per-employee summary — spend vs. cash advance'},
+  empSummaryHint: {ar:'الرصيد النهائي يشمل المرحّل من الأشهر السابقة تلقائيًا', en:'Final balance automatically includes amounts carried over from previous months'},
+  totalSpend: {ar:'إجمالي المصروف', en:'Total spend'},
+  advanceThisMonth: {ar:'المقدّم المستلم هذا الشهر', en:'Advance received this month'},
+  carriedOver: {ar:'المرحّل من الأشهر السابقة', en:'Carried over from previous months'},
+  finalBalance: {ar:'الرصيد النهائي', en:'Final balance'},
+  statusPaid: {ar:'سددت', en:'Paid'},
+  statusUnpaid: {ar:'لم تسدد', en:'Unpaid'},
+  login: {ar:'تسجيل الدخول', en:'Log in'},
+  username: {ar:'اسم المستخدم', en:'Username'},
+  password: {ar:'كلمة المرور', en:'Password'},
+  loginBtn: {ar:'دخول', en:'Log in'},
+  refreshAccounts: {ar:'تحديث قائمة الحسابات', en:'Refresh account list'},
+  delete: {ar:'حذف', en:'Delete'},
+  cancel: {ar:'إلغاء', en:'Cancel'},
+  confirmBtn: {ar:'تأكيد', en:'Confirm'},
+  ok: {ar:'حسنًا', en:'OK'},
+};
+function t(key){
+  const entry = TRANSLATIONS[key];
+  if(!entry) return key;
+  return entry[currentLang] || entry.ar;
+}
+function setLang(lang){
+  currentLang = lang;
+  try{ window.localStorage.setItem('iphrc-expenses-2026::lang', lang); }catch(e){}
+  document.documentElement.setAttribute('lang', lang === 'en' ? 'en' : 'ar');
+  document.documentElement.setAttribute('dir', lang === 'en' ? 'ltr' : 'rtl');
+}
+setLang(currentLang);
+
 const StorageAdapter = (function(){
   let mode = 'unknown'; // 'cloud' | 'bridge' | 'local' | 'memory'
   const memoryStore = {};
@@ -605,11 +708,12 @@ const StorageAdapter = (function(){
 })();
 
 const MONTHS = [
-  {key:'JAN', name:'يناير'}, {key:'FEB', name:'فبراير'}, {key:'MAR', name:'مارس'},
-  {key:'APR', name:'أبريل'}, {key:'MAY', name:'مايو'}, {key:'JUN', name:'يونيو'},
-  {key:'JUL', name:'يوليو'}, {key:'AUG', name:'أغسطس'}, {key:'SEP', name:'سبتمبر'},
-  {key:'OCT', name:'أكتوبر'}, {key:'NOV', name:'نوفمبر'}, {key:'DEC', name:'ديسمبر'}
+  {key:'JAN', name:'يناير', nameEn:'January'}, {key:'FEB', name:'فبراير', nameEn:'February'}, {key:'MAR', name:'مارس', nameEn:'March'},
+  {key:'APR', name:'أبريل', nameEn:'April'}, {key:'MAY', name:'مايو', nameEn:'May'}, {key:'JUN', name:'يونيو', nameEn:'June'},
+  {key:'JUL', name:'يوليو', nameEn:'July'}, {key:'AUG', name:'أغسطس', nameEn:'August'}, {key:'SEP', name:'سبتمبر', nameEn:'September'},
+  {key:'OCT', name:'أكتوبر', nameEn:'October'}, {key:'NOV', name:'نوفمبر', nameEn:'November'}, {key:'DEC', name:'ديسمبر', nameEn:'December'}
 ];
+function monthName(mo){ return currentLang==='en' ? mo.nameEn : mo.name; }
 
 function mkEntry(status,date,invoice,vendor,details,amount,employee,notes){
   return {id:'e'+(idCounter++), status, date, invoice, vendor, details, amount, employee, notes: notes||'', hasReceipt:false};
@@ -705,9 +809,30 @@ function seedData(){
 
   return {
     employees: ['IPHRC','AMRO','KHAMIS'],
-    months: m,
+    years: { '2026': { months: m } },
     idCounter
   };
+}
+
+/* =========================================================
+   دعم عدّة سنوات
+   ========================================================= */
+function yearKeysSorted(){
+  return Object.keys(state.years || {}).sort();
+}
+function ensureYearExists(st, year){
+  if(!st.years) st.years = {};
+  if(!st.years[year]){
+    const m = {};
+    MONTHS.forEach(mo=> m[mo.key] = {entries:[], advances:{}});
+    st.years[year] = { months: m };
+  }
+  return st.years[year];
+}
+// نسخة القراءة السريعة: تشير دومًا لأشهر السنة النشطة حاليًا في الواجهة
+function yearMonths(){
+  ensureYearExists(state, activeYear);
+  return state.years[activeYear].months;
 }
 
 /* =========================================================
@@ -715,6 +840,7 @@ function seedData(){
    ========================================================= */
 let state = null;
 let activeTab = 'SUMMARY';
+let activeYear = '2026';
 let saveTimer = null;
 
 const STATE_KEY = 'expenses-state-2026';
@@ -726,10 +852,22 @@ async function loadState(){
       const parsed = JSON.parse(raw);
       idCounter = parsed.idCounter || 1000;
       lastKnownRev = parsed.rev || 0;
+      // ترحيل تلقائي من النسخة القديمة أحادية السنة (months مباشرة على
+      // الجذر) إلى بنية years متعددة السنوات، حفاظًا على البيانات القديمة
+      if(parsed.months && !parsed.years){
+        parsed.years = { '2026': { months: parsed.months } };
+        delete parsed.months;
+      }
+      if(!parsed.years) parsed.years = {};
+      const keys = Object.keys(parsed.years).sort();
+      activeYear = parsed.lastActiveYear && parsed.years[parsed.lastActiveYear] ? parsed.lastActiveYear : (keys[keys.length-1] || '2026');
+      ensureYearExists(parsed, activeYear);
       return parsed;
     }
   }catch(e){ /* لا توجد بيانات محفوظة بعد */ }
-  return seedData();
+  const seeded = seedData();
+  activeYear = '2026';
+  return seeded;
 }
 
 let dataStorageOk = true;
@@ -862,7 +1000,7 @@ function relTime(ts){
 }
 
 function monthStats(key){
-  const mo = state.months[key];
+  const mo = yearMonths()[key];
   const entries = mo.entries;
   let paid=0, unpaid=0;
   entries.forEach(e=>{
@@ -879,6 +1017,21 @@ function monthStats(key){
   return {paid, unpaid, total, count: entries.length, byEmployee};
 }
 
+// المبلغ المرحّل لموظف معيّن من الأشهر السابقة في نفس السنة: مجموع
+// (المقدّم المستلم − المصروف) لكل شهر قبل الشهر المحدَّد. يُعاد التصفير
+// تلقائيًا في بداية كل سنة (لا ترحيل بين السنوات حاليًا).
+function employeeCarryIn(emp, uptoMonthKey){
+  let balance = 0;
+  for(const mo of MONTHS){
+    if(mo.key === uptoMonthKey) break;
+    const s = monthStats(mo.key);
+    const adv = (yearMonths()[mo.key].advances && yearMonths()[mo.key].advances[emp]) || 0;
+    const spent = s.byEmployee[emp] || 0;
+    balance += adv - spent;
+  }
+  return balance;
+}
+
 function yearStats(){
   let paid=0, unpaid=0, count=0;
   const byEmployee = {};
@@ -886,7 +1039,7 @@ function yearStats(){
   MONTHS.forEach(mo=>{
     const s = monthStats(mo.key);
     paid += s.paid; unpaid += s.unpaid; count += s.count;
-    const adv = state.months[mo.key].advances || {};
+    const adv = yearMonths()[mo.key].advances || {};
     Object.keys(s.byEmployee).forEach(emp=>{
       if(!byEmployee[emp]) byEmployee[emp] = {spent:0, advance:0};
       byEmployee[emp].spent += s.byEmployee[emp];
@@ -1098,7 +1251,7 @@ async function openReceiptModal(monthKey, entryId){
     if(!(await uiConfirm('حذف صورة الفاتورة؟', {danger:true, confirmText:'حذف'}))) return;
     await deleteReceipt(entryId);
     update(st=>{
-      const entry = st.months[monthKey].entries.find(e=>e.id===entryId);
+      const entry = yearMonths()[monthKey].entries.find(e=>e.id===entryId);
       if(entry) entry.hasReceipt = false;
     });
     closeIt();
@@ -1236,6 +1389,112 @@ async function openCloudSyncModal(){
 /* =========================================================
    إدارة الموظفين (قائمة "الموظف المسؤول" في جداول المصروفات)
    ========================================================= */
+/* =========================================================
+   بحث شامل عبر كل عمليات السنة
+   ========================================================= */
+function openSearchModal(){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+    <div class="modal-overlay" id="modalOverlay">
+      <div class="modal-box" style="max-width:680px;">
+        <div class="modal-head"><strong>بحث في كل عمليات السنة</strong><button class="icon-btn" id="modalClose">✕</button></div>
+        <div class="modal-body" style="text-align:right;background:#fff;">
+          <input id="searchInput" type="text" placeholder="ابحث بالمورّد، رقم الفاتورة، التفاصيل، الملاحظات، أو الموظف…" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:inherit;font-size:13.5px;" autofocus>
+          <div id="searchResults" style="margin-top:14px;"><div class="empty-note">اكتب كلمة للبحث في كل الأشهر.</div></div>
+        </div>
+      </div>
+    </div>`;
+  const closeIt = ()=>{ root.innerHTML=''; };
+  document.getElementById('modalOverlay').onclick = (e)=>{ if(e.target.id==='modalOverlay') closeIt(); };
+  document.getElementById('modalClose').onclick = closeIt;
+
+  const input = document.getElementById('searchInput');
+  const resultsBox = document.getElementById('searchResults');
+
+  function runSearch(){
+    const q = input.value.trim().toLowerCase();
+    if(!q){ resultsBox.innerHTML = '<div class="empty-note">اكتب كلمة للبحث في كل الأشهر.</div>'; return; }
+    const matches = [];
+    MONTHS.forEach(mo=>{
+      yearMonths()[mo.key].entries.forEach(e=>{
+        const hay = [e.vendor, e.invoice, e.details, e.notes, e.employee].join(' ').toLowerCase();
+        if(hay.includes(q)) matches.push({mo, e});
+      });
+    });
+    if(!matches.length){ resultsBox.innerHTML = '<div class="empty-note">لا توجد نتائج مطابقة.</div>'; return; }
+    resultsBox.innerHTML = `
+      <table>
+        <thead><tr><th>الشهر</th><th>التاريخ</th><th>المورّد</th><th>التفاصيل</th><th class="col-amount">المبلغ</th><th>الموظف</th><th></th></tr></thead>
+        <tbody>
+          ${matches.slice(0,100).map(({mo,e})=>`
+            <tr>
+              <td>${monthName(mo)}</td>
+              <td class="num">${esc(e.date)}</td>
+              <td>${esc(e.vendor)}</td>
+              <td>${esc(e.details)}</td>
+              <td class="num">${fmt(e.amount)}</td>
+              <td>${esc(e.employee)}</td>
+              <td><button class="ghost sm" data-jump="${mo.key}">فتح</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      ${matches.length>100 ? `<div class="empty-note">وعدد ${matches.length-100} نتيجة أخرى — دقّق كلمة البحث لتضييق النتائج.</div>` : ''}
+    `;
+    resultsBox.querySelectorAll('[data-jump]').forEach(btn=>{
+      btn.onclick = ()=>{ activeTab = btn.dataset.jump; closeIt(); render(); };
+    });
+  }
+  let searchDebounce = null;
+  input.addEventListener('input', ()=>{ clearTimeout(searchDebounce); searchDebounce = setTimeout(runSearch, 200); });
+  input.addEventListener('keydown', e=>{ if(e.key==='Enter'){ clearTimeout(searchDebounce); runSearch(); } });
+}
+
+/* =========================================================
+   سجل النشاط: من فعل ماذا ومتى (للمدير)
+   ========================================================= */
+function logActivity(action, detail){
+  if(!state.auditLog) state.auditLog = [];
+  state.auditLog.unshift({
+    ts: Date.now(),
+    user: currentUser ? currentUser.displayName : '—',
+    action,
+    detail: detail || ''
+  });
+  if(state.auditLog.length > 200) state.auditLog.length = 200;
+}
+
+function openActivityLogModal(){
+  const root = document.getElementById('modalRoot');
+  const log = state.auditLog || [];
+  root.innerHTML = `
+    <div class="modal-overlay" id="modalOverlay">
+      <div class="modal-box" style="max-width:600px;">
+        <div class="modal-head"><strong>سجل النشاط</strong><button class="icon-btn" id="modalClose">✕</button></div>
+        <div class="modal-body" style="text-align:right;background:#fff;max-height:60vh;">
+          ${!log.length ? '<div class="empty-note">لا يوجد نشاط مسجَّل بعد.</div>' : `
+            <table class="users-table">
+              <thead><tr><th>الوقت</th><th>المستخدم</th><th>الإجراء</th><th>التفاصيل</th></tr></thead>
+              <tbody>
+                ${log.map(item=>`
+                  <tr>
+                    <td class="num" style="white-space:nowrap;">${relTime(item.ts)}</td>
+                    <td>${esc(item.user)}</td>
+                    <td>${esc(item.action)}</td>
+                    <td style="color:var(--muted);font-size:12px;">${esc(item.detail)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          `}
+        </div>
+      </div>
+    </div>`;
+  const closeIt = ()=>{ root.innerHTML=''; };
+  document.getElementById('modalOverlay').onclick = (e)=>{ if(e.target.id==='modalOverlay') closeIt(); };
+  document.getElementById('modalClose').onclick = closeIt;
+}
+
 async function openEmployeesModal(){
   const root = document.getElementById('modalRoot');
   root.innerHTML = `
@@ -1428,72 +1687,130 @@ function renderShell(innerHtml){
     ${(()=>{
       const m = StorageAdapter.getMode();
       if(m === 'cloud' || m === 'bridge') return '';
-      if(m === 'local') return `<div class="storage-banner info">💾 يتم الحفظ محليًا في متصفح هذا الجهاز فقط (وليس مزامنة سحابية بين الفريق) — إن فتحت التطبيق من جهاز أو متصفح آخر لن ترى نفس البيانات. ${isAdmin() ? 'اربط "المزامنة السحابية" من الأعلى للمشاركة بين الجميع، أو ' : ''}استخدم "تنزيل نسخة احتياطية" لنقل البيانات بين الأجهزة.</div>`;
+      if(m === 'local'){
+        if(currentLang==='en'){
+          return `<div class="storage-banner info">💾 Data is saved locally in this device's browser only (not synced with the team) — opening the app on another device or browser won't show the same data. ${isAdmin() ? 'Link "Cloud sync" above to share with everyone, or ' : ''}use "Download backup" to move data between devices.</div>`;
+        }
+        return `<div class="storage-banner info">💾 يتم الحفظ محليًا في متصفح هذا الجهاز فقط (وليس مزامنة سحابية بين الفريق) — إن فتحت التطبيق من جهاز أو متصفح آخر لن ترى نفس البيانات. ${isAdmin() ? 'اربط "المزامنة السحابية" من الأعلى للمشاركة بين الجميع، أو ' : ''}استخدم "تنزيل نسخة احتياطية" لنقل البيانات بين الأجهزة.</div>`;
+      }
+      if(currentLang==='en') return `<div class="storage-banner">⚠️ Could not enable any persistent storage in this view — edits show now but won't be saved after closing the page. Download a backup (JSON) frequently to save your work.</div>`;
       return `<div class="storage-banner">⚠️ تعذّر تفعيل أي تخزين دائم في هذا العرض — التعديلات تظهر الآن لكن لن تُحفظ بعد إغلاق الصفحة. نزّل نسخة احتياطية (JSON) بشكل متكرر لحفظ عملك.</div>`;
     })()}
     <div class="masthead">
       <div class="brand">
-        <img src="data:image/png;base64,${LOGO_B64}" alt="شعار الهيئة الدائمة المستقلة لحقوق الإنسان">
+        <img src="data:image/png;base64,${LOGO_B64}" alt="${t('orgName')}">
         <div>
-          <div class="org-name">الهيئة الدائمة المستقلة لحقوق الإنسان — منظمة التعاون الإسلامي</div>
-          <h1>مصروفات ومشتريات الهيئة — 2026</h1>
-          <div class="sub">إجمالي السنة: <span class="num">${fmt(y.total)}</span> ر.س · ${y.count} عملية${state.updatedAt ? ' · آخر تحديث ' + relTime(state.updatedAt) : ''}</div>
+          <div class="org-name">${t('orgName')}</div>
+          <h1>${t('appTitle')} — ${activeYear}</h1>
+          <div class="sub">${t('yearTotal')}: <span class="num">${fmt(y.total)}</span> ${currentLang==='en'?'SAR':'ر.س'} · ${y.count} ${t('operations')}${state.updatedAt ? ' · ' + t('lastUpdate') + ' ' + relTime(state.updatedAt) : ''}</div>
         </div>
       </div>
       <div class="actions">
-        <button class="ghost sm" id="btnRefreshNow" style="padding:8px 14px;" title="جلب آخر التحديثات الآن">🔄 تحديث</button>
-        <button class="ghost sm" id="btnExportJson" style="padding:8px 14px;">تنزيل نسخة احتياطية (JSON)</button>
-        <button class="ghost sm" id="btnImportJson" style="padding:8px 14px;">استيراد نسخة احتياطية</button>
+        <button class="ghost sm" id="btnLangToggle" style="padding:8px 14px;" title="Language / اللغة">${currentLang==='en' ? 'العربية' : 'English'}</button>
+        <button class="ghost sm" id="btnRefreshNow" style="padding:8px 14px;" title="${currentLang==='en'?'Fetch latest updates now':'جلب آخر التحديثات الآن'}">${t('refresh')}</button>
+        <button class="ghost sm" id="btnSearch" style="padding:8px 14px;">${t('search')}</button>
+        <button class="ghost sm" id="btnExportJson" style="padding:8px 14px;">${t('exportBackup')}</button>
+        <button class="ghost sm" id="btnImportJson" style="padding:8px 14px;">${t('importBackup')}</button>
         <input type="file" id="importFileInput" accept="application/json,.json" style="display:none;">
-        ${isAdmin() ? '<button class="ghost sm" id="btnAddEmployee" style="padding:8px 14px;">إدارة الموظفين</button>' : ''}
-        ${isAdmin() ? '<button class="ghost sm" id="btnManageUsers" style="padding:8px 14px;">إدارة المستخدمين</button>' : ''}
-        ${isAdmin() ? '<button class="ghost sm" id="btnCloudSync" style="padding:8px 14px;">المزامنة السحابية</button>' : ''}
+        ${isAdmin() ? `<button class="ghost sm" id="btnAddEmployee" style="padding:8px 14px;">${t('manageEmployees')}</button>` : ''}
+        ${isAdmin() ? `<button class="ghost sm" id="btnManageUsers" style="padding:8px 14px;">${t('manageUsers')}</button>` : ''}
+        ${isAdmin() ? `<button class="ghost sm" id="btnCloudSync" style="padding:8px 14px;">${t('cloudSync')}</button>` : ''}
+        ${isAdmin() ? `<button class="ghost sm" id="btnActivityLog" style="padding:8px 14px;">${t('activityLog')}</button>` : ''}
         <div class="account-wrap">
           <div class="account-chip" id="accountChip">
             <span class="avatar">${initials(currentUser.displayName)}</span>
-            <span>${esc(currentUser.displayName)}<span class="role-pill ${currentUser.role}">${currentUser.role==='admin'?'مدير':'موظف'}</span></span>
+            <span>${esc(currentUser.displayName)}<span class="role-pill ${currentUser.role}">${currentUser.role==='admin'?t('admin'):t('member')}</span></span>
           </div>
           <div class="account-menu" id="accountMenu" style="display:none;">
-            <button id="btnChangePass">تغيير كلمة المرور</button>
-            <button id="btnLogout">تسجيل الخروج</button>
+            <button id="btnChangePass">${t('changePassword')}</button>
+            <button id="btnLogout">${t('logout')}</button>
           </div>
         </div>
       </div>
     </div>
+    <div class="year-switcher" id="yearSwitcher"></div>
     <div class="tabs" id="tabs"></div>
     <div id="tabContent">${innerHtml}</div>
     <div class="footer-note">
-      <span class="legend-dot" style="background:var(--ok-bg);border:1px solid var(--ok);"></span> رصيد متبقٍ مع الموظف من المقدّم &nbsp;&nbsp;
-      <span class="legend-dot" style="background:var(--bad-bg);border:1px solid var(--bad);"></span> الموظف صرف أكثر من المقدّم وله مستحقات<br>
+      <span class="legend-dot" style="background:var(--ok-bg);border:1px solid var(--ok);"></span> ${currentLang==='en' ? 'Balance remaining with employee from advance' : 'رصيد متبقٍ مع الموظف من المقدّم'} &nbsp;&nbsp;
+      <span class="legend-dot" style="background:var(--bad-bg);border:1px solid var(--bad);"></span> ${currentLang==='en' ? 'Employee spent more than the advance and is owed the difference' : 'الموظف صرف أكثر من المقدّم وله مستحقات'}<br>
       ${(()=>{
         const m = StorageAdapter.getMode();
+        if(currentLang==='en'){
+          if(m === 'cloud') return "Data is saved to the Commission's Google account and shared automatically with everyone who opens this app.";
+          if(m === 'bridge') return 'Data is saved automatically and shared with everyone who opens this app.';
+          if(m === 'local') return "Data is saved automatically in this device's browser only (local storage, not shared with the team).";
+          return 'Could not enable any persistent storage — use "Download backup" before closing the page, and "Import backup" when reopening it to restore your work.';
+        }
         if(m === 'cloud') return 'البيانات تُحفظ سحابيًا في حساب Google الخاص بالهيئة وتُشارك تلقائيًا بين جميع من يفتح هذا التطبيق.';
         if(m === 'bridge') return 'البيانات تُحفظ تلقائيًا وتُشارك بين جميع من يفتح هذا التطبيق.';
         if(m === 'local') return 'البيانات تُحفظ تلقائيًا في متصفح هذا الجهاز فقط (تخزين محلي، غير مشترك مع الفريق).';
         return 'تعذّر تفعيل أي تخزين دائم — استخدم "تنزيل نسخة احتياطية" قبل إغلاق الصفحة، و"استيراد نسخة احتياطية" عند فتحها مجددًا لاستعادة عملك.';
-      })()} الإجماليات في صفحة «الملخص» تُحسب مباشرة من بيانات الأشهر.<br>
+      })()} ${currentLang==='en' ? 'Totals on the Summary page are calculated directly from monthly data.' : 'الإجماليات في صفحة «الملخص» تُحسب مباشرة من بيانات الأشهر.'}<br>
       اضغط 📎 بجانب أي عملية لتصوير الفاتورة بالكاميرا أو رفع صورة/مسح ضوئي لها؛ تتحوّل الأيقونة إلى 🧾 بعد الإرفاق ويمكنك عرضها أو استبدالها أو تنزيلها لاحقًا.<br>
       يستخدم التطبيق «خط ثمانية» تلقائيًا إن كان مثبّتًا على جهازك (رخصته للاستخدام الشخصي فقط عبر <span class="num" style="font-family:inherit;">font.thmanyah.com</span>)، وإلا فيعرض خط Cairo بديلًا.
     </div>
   `;
 
+  const yearSwitcher = document.getElementById('yearSwitcher');
+  yearKeysSorted().forEach(y=>{
+    const pill = document.createElement('div');
+    pill.className = 'year-pill' + (y===activeYear ? ' active' : '');
+    pill.textContent = y;
+    pill.onclick = ()=>{
+      if(y === activeYear) return;
+      activeYear = y;
+      activeTab = 'SUMMARY';
+      state.lastActiveYear = activeYear;
+      persist();
+      render();
+    };
+    yearSwitcher.appendChild(pill);
+  });
+  if(isAdmin()){
+    const addYear = document.createElement('div');
+    addYear.className = 'year-pill add';
+    addYear.textContent = t('addYear');
+    addYear.onclick = async ()=>{
+      const existing = yearKeysSorted();
+      const suggestion = String(Math.max(...existing.map(Number)) + 1);
+      const input = await uiPrompt('أدخل السنة الجديدة (أربعة أرقام):', suggestion);
+      if(!input) return;
+      const y = input.trim();
+      if(!/^\d{4}$/.test(y)){ await uiAlert('أدخل سنة صحيحة مكوّنة من أربعة أرقام، مثل 2027.'); return; }
+      if(state.years && state.years[y]){ await uiAlert('هذه السنة موجودة بالفعل.'); activeYear = y; render(); return; }
+      update(st=>{
+        ensureYearExists(st, y);
+        logActivity('إضافة سنة جديدة', y);
+      });
+      activeYear = y;
+      activeTab = 'SUMMARY';
+      state.lastActiveYear = activeYear;
+      persist();
+      render();
+    };
+    yearSwitcher.appendChild(addYear);
+  }
+
   const tabs = document.getElementById('tabs');
   const summaryTab = document.createElement('div');
   summaryTab.className = 'tab' + (activeTab==='SUMMARY'?' active':'');
-  summaryTab.textContent = 'الملخص';
+  summaryTab.textContent = t('summary');
   summaryTab.onclick = ()=>{ activeTab='SUMMARY'; render(); };
   tabs.appendChild(summaryTab);
 
   MONTHS.forEach(mo=>{
     const t = document.createElement('div');
-    const has = state.months[mo.key].entries.length>0;
+    const has = yearMonths()[mo.key].entries.length>0;
     t.className = 'tab' + (activeTab===mo.key?' active':'');
-    t.innerHTML = mo.name + (has?'<span class="dot"></span>':'');
+    t.innerHTML = monthName(mo) + (has?'<span class="dot"></span>':'');
     t.onclick = ()=>{ activeTab=mo.key; render(); };
     tabs.appendChild(t);
   });
 
   const refreshBtn = document.getElementById('btnRefreshNow');
+  const searchBtn = document.getElementById('btnSearch');
+  if(searchBtn) searchBtn.onclick = openSearchModal;
   if(refreshBtn) refreshBtn.onclick = async ()=>{
     refreshBtn.disabled = true;
     const before = refreshBtn.textContent;
@@ -1501,6 +1818,11 @@ function renderShell(innerHtml){
     const changed = await pullRemoteState(true);
     if(!changed){ refreshBtn.textContent = '✔ محدَّث بالفعل'; setTimeout(()=>{ refreshBtn.textContent = before; refreshBtn.disabled = false; }, 1200); }
     else{ refreshBtn.disabled = false; }
+  };
+  const langBtn = document.getElementById('btnLangToggle');
+  if(langBtn) langBtn.onclick = ()=>{
+    setLang(currentLang === 'en' ? 'ar' : 'en');
+    render();
   };
   document.getElementById('btnExportJson').onclick = exportJson;
   const importBtn = document.getElementById('btnImportJson');
@@ -1515,6 +1837,8 @@ function renderShell(innerHtml){
   if(manageUsersBtn) manageUsersBtn.onclick = openUsersModal;
   const cloudSyncBtn = document.getElementById('btnCloudSync');
   if(cloudSyncBtn) cloudSyncBtn.onclick = openCloudSyncModal;
+  const activityBtn = document.getElementById('btnActivityLog');
+  if(activityBtn) activityBtn.onclick = openActivityLogModal;
 
   const chip = document.getElementById('accountChip');
   const menu = document.getElementById('accountMenu');
@@ -1529,7 +1853,7 @@ function exportJson(){
   const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = 'مصروفات_الهيئة_2026_نسخة_احتياطية.json';
+  a.href = url; a.download = 'مصروفات_الهيئة_نسخة_احتياطية.json';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
@@ -1544,18 +1868,33 @@ function importJson(input){
   reader.onload = async ()=>{
     try{
       const parsed = JSON.parse(reader.result);
-      if(!parsed || typeof parsed !== 'object' || !parsed.months || !parsed.employees){
+      // يدعم كل من نسخ الاستيراد القديمة (months على الجذر لسنة واحدة)
+      // والجديدة (years لعدّة سنوات)
+      if(parsed && typeof parsed === 'object' && parsed.months && !parsed.years){
+        parsed.years = { '2026': { months: parsed.months } };
+        delete parsed.months;
+      }
+      if(!parsed || typeof parsed !== 'object' || !parsed.years || !parsed.employees){
         await uiAlert('هذا الملف لا يبدو نسخة احتياطية صالحة لهذا التطبيق.');
         return;
       }
-      const totalEntries = MONTHS.reduce((sum,mo)=> sum + ((parsed.months[mo.key] && parsed.months[mo.key].entries) ? parsed.months[mo.key].entries.length : 0), 0);
-      const proceed = await uiConfirm(`سيتم استبدال كل البيانات الحالية في الشاشة بمحتوى الملف المستورد (${totalEntries} عملية). هل تريد المتابعة؟`, {danger:true, confirmText:'استيراد واستبدال'});
+      let totalEntries = 0;
+      Object.keys(parsed.years).forEach(y=>{
+        MONTHS.forEach(mo=>{
+          const m = parsed.years[y].months && parsed.years[y].months[mo.key];
+          if(m && m.entries) totalEntries += m.entries.length;
+        });
+      });
+      const proceed = await uiConfirm(`سيتم استبدال كل البيانات الحالية في الشاشة بمحتوى الملف المستورد (${totalEntries} عملية عبر ${Object.keys(parsed.years).length} سنة). هل تريد المتابعة؟`, {danger:true, confirmText:'استيراد واستبدال'});
       if(!proceed){
         input.value = '';
         return;
       }
       idCounter = parsed.idCounter || 1000;
       state = parsed;
+      const yks = yearKeysSorted();
+      activeYear = yks[yks.length-1] || '2026';
+      ensureYearExists(state, activeYear);
       persist();
       render();
       await uiAlert('تم استيراد النسخة الاحتياطية بنجاح.');
@@ -1569,15 +1908,16 @@ function importJson(input){
 }
 
 function exportMonthCsv(key){
-  const mo = state.months[key];
-  const name = MONTHS.find(m=>m.key===key).name;
-  let rows = [['م','الحالة','التاريخ','رقم الفاتورة','اسم المورد','التفاصيل','المبلغ','الموظف المسؤول','ملاحظات']];
-  mo.entries.forEach((e,i)=> rows.push([i+1,e.status,e.date,e.invoice,e.vendor,e.details,e.amount,e.employee,e.notes]));
+  const mo = yearMonths()[key];
+  const moDef = MONTHS.find(m=>m.key===key);
+  const name = monthName(moDef);
+  let rows = [[t('colNum'),t('colStatus'),t('colDate'),t('colInvoice'),t('colVendor'),t('colDetails'),t('colAmount'),t('colEmployee'),t('colNotes')]];
+  mo.entries.forEach((e,i)=> rows.push([i+1, e.status==='سددت'?t('statusPaid'):t('statusUnpaid'), e.date,e.invoice,e.vendor,e.details,e.amount,e.employee,e.notes]));
   const csv = '\uFEFF'+rows.map(r=>r.map(c=>`"${String(c==null?'':c).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = `مصروفات_${name}_2026.csv`;
+  a.href = url; a.download = `${currentLang==='en'?'expenses':'مصروفات'}_${name}_${activeYear}.csv`;
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
@@ -1589,30 +1929,35 @@ function renderSummary(){
   const y = yearStats();
   let html = `
     <div class="grid-4">
-      <div class="stat"><div class="label">إجمالي المصروفات</div><div class="value num">${fmt(y.total)}</div></div>
-      <div class="stat ok"><div class="label">المسدد</div><div class="value num">${fmt(y.paid)}</div></div>
-      <div class="stat bad"><div class="label">غير المسدد</div><div class="value num">${fmt(y.unpaid)}</div></div>
-      <div class="stat gold"><div class="label">عدد العمليات</div><div class="value num">${y.count}</div></div>
+      <div class="stat"><div class="label">${t('totalExpenses')}</div><div class="value num">${fmt(y.total)}</div></div>
+      <div class="stat ok"><div class="label">${t('paid')}</div><div class="value num">${fmt(y.paid)}</div></div>
+      <div class="stat bad"><div class="label">${t('unpaid')}</div><div class="value num">${fmt(y.unpaid)}</div></div>
+      <div class="stat gold"><div class="label">${t('entryCount')}</div><div class="value num">${y.count}</div></div>
     </div>
 
     <div class="panel">
-      <h2>إجمالي المصروفات شهريًا <span class="hint">اضغط على أي شهر لفتحه</span></h2>
+      <h2>${t('monthlyTotals')} <span class="hint">${t('clickToOpen')}</span></h2>
       <div class="month-grid">
-        ${MONTHS.map(mo=>{
-          const s = monthStats(mo.key);
-          return `<div class="month-card" data-month="${mo.key}">
-            <div class="m-name">${mo.name}</div>
-            <div class="m-total num" style="color:${s.total>0?'var(--teal)':'var(--muted)'}">${fmt(s.total)}</div>
-            <div class="m-count">${s.count} عملية${s.count?` · مسدد ${fmt(s.paid)}`:''}</div>
-          </div>`;
-        }).join('')}
+        ${(()=>{
+          const maxTotal = Math.max(1, ...MONTHS.map(mo=>monthStats(mo.key).total));
+          return MONTHS.map(mo=>{
+            const s = monthStats(mo.key);
+            const barPct = Math.round((s.total / maxTotal) * 100);
+            return `<div class="month-card" data-month="${mo.key}">
+              <div class="m-name">${monthName(mo)}</div>
+              <div class="m-total num" style="color:${s.total>0?'var(--teal)':'var(--muted)'}">${fmt(s.total)}</div>
+              <div class="m-bar-track"><div class="m-bar-fill" style="width:${s.total>0?Math.max(barPct,4):0}%;"></div></div>
+              <div class="m-count">${s.count} ${t('operations')}${s.count?` · ${t('paid')} ${fmt(s.paid)}`:''}</div>
+            </div>`;
+          }).join('');
+        })()}
       </div>
     </div>
 
     <div class="panel">
-      <h2>الإجمالي السنوي حسب الموظف</h2>
+      <h2>${t('annualByEmployee')}</h2>
       <table class="emp-table">
-        <thead><tr><th>الموظف</th><th>إجمالي المصروف السنوي</th><th>إجمالي المقدّمات المستلمة</th><th>الفرق (المقدّم − المصروف)</th></tr></thead>
+        <thead><tr><th>${t('employee')}</th><th>${t('annualSpent')}</th><th>${t('annualAdvance')}</th><th>${t('diffAdvSpend')}</th></tr></thead>
         <tbody>
           ${Object.keys(y.byEmployee).map(emp=>{
             const d = y.byEmployee[emp];
@@ -1639,19 +1984,19 @@ function renderSummary(){
    ========================================================= */
 function renderMonth(key){
   const moDef = MONTHS.find(m=>m.key===key);
-  const mo = state.months[key];
+  const mo = yearMonths()[key];
   const s = monthStats(key);
 
   const rowsHtml = mo.entries.map((e,i)=>`
     <tr data-id="${e.id}">
       <td class="col-num">${i+1}</td>
       <td class="col-status">
-        <button class="badge ${e.status==='سددت'?'paid':'unpaid'}" data-act="toggle-status">${esc(e.status)}</button>
+        <button class="badge ${e.status==='سددت'?'paid':'unpaid'}" data-act="toggle-status">${e.status==='سددت'?t('statusPaid'):t('statusUnpaid')}</button>
       </td>
       <td class="col-date"><input class="cell-input" type="date" data-field="date" value="${esc(e.date)}"></td>
-      <td><input class="cell-input" type="text" data-field="invoice" value="${esc(e.invoice)}" placeholder="رقم الفاتورة"></td>
-      <td><input class="cell-input" type="text" data-field="vendor" value="${esc(e.vendor)}" placeholder="اسم المورّد"></td>
-      <td><input class="cell-input" type="text" data-field="details" value="${esc(e.details)}" placeholder="التفاصيل"></td>
+      <td><input class="cell-input" type="text" data-field="invoice" value="${esc(e.invoice)}" placeholder="${t('colInvoice')}"></td>
+      <td><input class="cell-input" type="text" data-field="vendor" value="${esc(e.vendor)}" placeholder="${t('colVendor')}"></td>
+      <td><input class="cell-input" type="text" data-field="details" value="${esc(e.details)}" placeholder="${t('colDetails')}"></td>
       <td class="col-amount"><input class="cell-input" type="number" step="0.01" data-field="amount" value="${e.amount}"></td>
       <td>
         <select class="cell-input" data-field="employee">
@@ -1660,58 +2005,60 @@ function renderMonth(key){
       </td>
       <td><input class="cell-input" type="text" data-field="notes" value="${esc(e.notes)}" placeholder="—"></td>
       <td class="col-receipt">
-        <button class="receipt-btn ${e.hasReceipt?'has-file':''}" data-act="receipt" title="${e.hasReceipt?'عرض صورة الفاتورة':'إرفاق / تصوير الفاتورة'}">${e.hasReceipt?'🧾':'📎'}</button>
+        <button class="receipt-btn ${e.hasReceipt?'has-file':''}" data-act="receipt" title="${e.hasReceipt?(currentLang==='en'?'View invoice image':'عرض صورة الفاتورة'):(currentLang==='en'?'Attach / scan invoice':'إرفاق / تصوير الفاتورة')}">${e.hasReceipt?'🧾':'📎'}</button>
         <input type="file" accept="image/*" data-file-for="${e.id}" style="display:none;">
         <input type="file" accept="image/*" capture="environment" data-camera-for="${e.id}" style="display:none;">
       </td>
-      <td class="row-actions">${isAdmin() ? '<button class="icon-btn" data-act="delete" title="حذف الصف">✕</button>' : ''}</td>
+      <td class="row-actions">${isAdmin() ? `<button class="icon-btn" data-act="delete" title="${currentLang==='en'?'Delete row':'حذف الصف'}">✕</button>` : ''}</td>
     </tr>
   `).join('');
 
   const empRows = Object.keys(s.byEmployee).map(emp=>{
     const adv = (mo.advances && mo.advances[emp]) || 0;
-    const diff = adv - s.byEmployee[emp];
+    const carryIn = employeeCarryIn(emp, key);
+    const diff = (adv + carryIn) - s.byEmployee[emp];
     return `<tr>
       <td>${esc(emp)}</td>
       <td class="num">${fmt(s.byEmployee[emp])}</td>
       <td><input class="cell-input num" type="number" step="0.01" data-adv-emp="${esc(emp)}" value="${adv}" style="text-align:left;direction:ltr;background:#EAF6F0;border:1px solid var(--gold-soft);border-radius:5px;"></td>
-      <td class="num ${diff>=0?'diff-pos':'diff-neg'}">${fmt(diff)}</td>
+      <td class="num ${carryIn>=0?'diff-pos':'diff-neg'}">${fmt(carryIn)}</td>
+      <td class="num ${diff>=0?'diff-pos':'diff-neg'}" style="font-weight:800;">${fmt(diff)}</td>
     </tr>`;
   }).join('');
 
   let html = `
     <div class="grid-4">
-      <div class="stat"><div class="label">إجمالي مصروفات ${moDef.name}</div><div class="value num">${fmt(s.total)}</div></div>
-      <div class="stat ok"><div class="label">المسدد</div><div class="value num">${fmt(s.paid)}</div></div>
-      <div class="stat bad"><div class="label">غير المسدد</div><div class="value num">${fmt(s.unpaid)}</div></div>
-      <div class="stat gold"><div class="label">عدد العمليات</div><div class="value num">${s.count}</div></div>
+      <div class="stat"><div class="label">${t('totalExpenses')} — ${monthName(moDef)}</div><div class="value num">${fmt(s.total)}</div></div>
+      <div class="stat ok"><div class="label">${t('paid')}</div><div class="value num">${fmt(s.paid)}</div></div>
+      <div class="stat bad"><div class="label">${t('unpaid')}</div><div class="value num">${fmt(s.unpaid)}</div></div>
+      <div class="stat gold"><div class="label">${t('entryCount')}</div><div class="value num">${s.count}</div></div>
     </div>
 
     <div class="panel">
-      <h2>سجل مصروفات ${moDef.name}
+      <h2>${t('monthExpenseLog')} ${monthName(moDef)}
         <span>
-          <button class="ghost sm" id="btnCsv">تصدير CSV</button>
+          <button class="ghost sm" id="btnCsv">${t('exportCsv')}</button>
         </span>
       </h2>
       ${mo.entries.length ? `
       <div style="overflow-x:auto;">
       <table>
         <thead><tr>
-          <th class="col-num">م</th><th class="col-status">الحالة</th><th class="col-date">التاريخ</th>
-          <th>رقم الفاتورة</th><th>اسم المورّد</th><th>التفاصيل</th><th class="col-amount">المبلغ</th>
-          <th>الموظف المسؤول</th><th>ملاحظات</th><th class="col-receipt">مسح الفاتورة</th><th></th>
+          <th class="col-num">${t('colNum')}</th><th class="col-status">${t('colStatus')}</th><th class="col-date">${t('colDate')}</th>
+          <th>${t('colInvoice')}</th><th>${t('colVendor')}</th><th>${t('colDetails')}</th><th class="col-amount">${t('colAmount')}</th>
+          <th>${t('colEmployee')}</th><th>${t('colNotes')}</th><th class="col-receipt">${t('colReceipt')}</th><th></th>
         </tr></thead>
         <tbody id="rowsBody">${rowsHtml}</tbody>
-        <tfoot><tr><td colspan="6">الإجمالي</td><td class="num">${fmt(s.total)}</td><td colspan="4"></td></tr></tfoot>
+        <tfoot><tr><td colspan="6">${t('total')}</td><td class="num">${fmt(s.total)}</td><td colspan="4"></td></tr></tfoot>
       </table>
-      </div>` : `<div class="empty-note">لا توجد عمليات مسجّلة بعد لهذا الشهر — اضغط «إضافة عملية» للبدء.</div>`}
-      <div class="add-row-bar"><button class="primary" id="btnAddRow">+ إضافة عملية</button></div>
+      </div>` : `<div class="empty-note">${t('emptyMonth')}</div>`}
+      <div class="add-row-bar"><button class="primary" id="btnAddRow">${t('addEntry')}</button></div>
     </div>
 
     <div class="panel">
-      <h2>ملخص حسب الموظف — المصروف مقابل المقدّم النقدي</h2>
+      <h2>${t('empSummaryTitle')} <span class="hint">${t('empSummaryHint')}</span></h2>
       <table class="emp-table">
-        <thead><tr><th>الموظف</th><th>إجمالي المصروف</th><th>المقدّم المستلم (نقدًا)</th><th>الفرق</th></tr></thead>
+        <thead><tr><th>${t('employee')}</th><th>${t('totalSpend')}</th><th>${t('advanceThisMonth')}</th><th>${t('carriedOver')}</th><th>${t('finalBalance')}</th></tr></thead>
         <tbody>${empRows}</tbody>
       </table>
     </div>
@@ -1721,7 +2068,8 @@ function renderMonth(key){
 
   document.getElementById('btnAddRow').onclick = ()=>{
     update(st=>{
-      st.months[key].entries.push(mkEntry('لم تسدد', new Date().toISOString().slice(0,10), '', '', '', 0, st.employees[0]||''));
+      yearMonths()[key].entries.push(mkEntry('لم تسدد', new Date().toISOString().slice(0,10), '', '', '', 0, st.employees[0]||''));
+      logActivity('إضافة عملية', moDef.name);
     });
   };
   document.getElementById('btnCsv').onclick = ()=> exportMonthCsv(key);
@@ -1737,7 +2085,7 @@ function renderMonth(key){
         // مزعج على كل حرف. الحفظ الفعلي وإعادة الرسم يحدثان عند مغادرة
         // الحقل (blur) أو بعد توقف قصير عن الكتابة.
         input.addEventListener('input', ()=>{
-          const entry = state.months[key].entries.find(e=>e.id===id);
+          const entry = yearMonths()[key].entries.find(e=>e.id===id);
           if(!entry) return;
           entry[field] = field==='amount' ? (parseFloat(input.value)||0) : input.value;
           scheduleSilentSave();
@@ -1748,7 +2096,7 @@ function renderMonth(key){
         const evt = (input.tagName==='SELECT' || input.type==='date') ? 'change' : 'input';
         input.addEventListener(evt, ()=>{
           update(st=>{
-            const entry = st.months[key].entries.find(e=>e.id===id);
+            const entry = yearMonths()[key].entries.find(e=>e.id===id);
             if(!entry) return;
             entry[field] = input.value;
           });
@@ -1758,7 +2106,7 @@ function renderMonth(key){
     const statusBtn = tr.querySelector('[data-act="toggle-status"]');
     if(statusBtn) statusBtn.onclick = ()=>{
       update(st=>{
-        const entry = st.months[key].entries.find(e=>e.id===id);
+        const entry = yearMonths()[key].entries.find(e=>e.id===id);
         entry.status = entry.status==='سددت' ? 'لم تسدد' : 'سددت';
       });
     };
@@ -1767,7 +2115,7 @@ function renderMonth(key){
       if(!isAdmin()){ await uiAlert('حذف العمليات متاح للمدير فقط.'); return; }
       if(await uiConfirm('حذف هذا الصف؟', {danger:true, confirmText:'حذف'})){
         deleteReceipt(id);
-        update(st=>{ st.months[key].entries = st.months[key].entries.filter(e=>e.id!==id); });
+        update(st=>{ yearMonths()[key].entries = yearMonths()[key].entries.filter(e=>e.id!==id); });
       }
     };
 
@@ -1776,7 +2124,7 @@ function renderMonth(key){
     const receiptBtn = tr.querySelector('[data-act="receipt"]');
     if(receiptBtn){
       receiptBtn.onclick = ()=>{
-        const entry = state.months[key].entries.find(e=>e.id===id);
+        const entry = yearMonths()[key].entries.find(e=>e.id===id);
         if(entry && entry.hasReceipt){ openReceiptModal(key, id); }
         else { openAttachChoiceModal(fileInput, cameraInput); }
       };
@@ -1791,7 +2139,7 @@ function renderMonth(key){
         // المشترك، ثم نحاول الحفظ الدائم بشكل منفصل
         receiptMemoryCache[id] = dataUrl;
         update(st=>{
-          const entry = st.months[key].entries.find(e=>e.id===id);
+          const entry = yearMonths()[key].entries.find(e=>e.id===id);
           if(entry) entry.hasReceipt = true;
         });
         try{
@@ -1814,8 +2162,8 @@ function renderMonth(key){
 
   document.querySelectorAll('[data-adv-emp]').forEach(input=>{
     input.addEventListener('input', ()=>{
-      if(!state.months[key].advances) state.months[key].advances = {};
-      state.months[key].advances[input.dataset.advEmp] = parseFloat(input.value)||0;
+      if(!yearMonths()[key].advances) yearMonths()[key].advances = {};
+      yearMonths()[key].advances[input.dataset.advEmp] = parseFloat(input.value)||0;
       scheduleSilentSave();
     });
     input.addEventListener('blur', ()=>{ commitEditsNow(); });
