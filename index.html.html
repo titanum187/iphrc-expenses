@@ -540,7 +540,7 @@ function renderLogin(users){
     const h = hashPass(pass);
     if(h !== user.passHash){ errBox.innerHTML = `<div class="auth-error">${currentLang==='en'?'Incorrect password.':'كلمة المرور غير صحيحة.'}</div>`; return; }
     currentUser = {username: user.username, displayName: user.displayName, role: user.role};
-    saveSession(user.username);
+    saveSession(currentUser);
     await startApp();
   };
   document.getElementById('liRefresh').onclick = async ()=>{
@@ -676,14 +676,19 @@ setLang(currentLang);
    شاشة الدخول عند مجرد تحديث الصفحة.
    ========================================================= */
 const SESSION_KEY = 'iphrc-expenses-2026::session-user';
-function saveSession(username){
-  try{ window.localStorage.setItem(SESSION_KEY, username); }catch(e){}
+function saveSession(user){
+  try{ window.localStorage.setItem(SESSION_KEY, JSON.stringify({username:user.username, displayName:user.displayName, role:user.role})); }catch(e){}
 }
 function clearSession(){
   try{ window.localStorage.removeItem(SESSION_KEY); }catch(e){}
 }
 function getSavedSession(){
-  try{ return window.localStorage.getItem(SESSION_KEY); }catch(e){ return null; }
+  try{
+    const raw = window.localStorage.getItem(SESSION_KEY);
+    if(!raw) return null;
+    // توافق مع النسخة القديمة التي كانت تخزّن اسم المستخدم كنص مجرد فقط
+    try{ return JSON.parse(raw); }catch(e){ return {username: raw, displayName: raw, role: 'member'}; }
+  }catch(e){ return null; }
 }
 
 const StorageAdapter = (function(){
@@ -2628,46 +2633,34 @@ async function startApp(){
 }
 
 async function boot(){
-  const savedUsername = getSavedSession();
-  if(savedUsername){
-    // حاول استعادة الجلسة فورًا: أولًا من أي بيانات متوفرة محليًا (يشمل
-    // حساب المدير المدمج) دون انتظار الشبكة إطلاقًا
-    const cachedUsers = usersCache || [builtinAdmin()];
-    let user = cachedUsers.find(u=>u.username===savedUsername);
-    if(user){
-      currentUser = {username: user.username, displayName: user.displayName, role: user.role};
-      await startApp();
-      // نحدّث بيانات الحساب (الدور، الاسم) بصمت في الخلفية دون مقاطعة الجلسة
-      loadUsers(true).then(fresh=>{
-        const updated = fresh.find(u=>u.username===savedUsername);
-        if(updated && currentUser && currentUser.username===savedUsername){
-          currentUser.role = updated.role;
-          currentUser.displayName = updated.displayName;
-        }
-      }).catch(()=>{});
-      return;
-    }
-    // الحساب المحفوظ ليس ضمن ما هو متاح محليًا (موظف حقيقي مثلًا) — نحاول
-    // جلب القائمة الفعلية من السحابة مرة واحدة قبل عرض شاشة الدخول
-    document.getElementById('app').innerHTML = '<div class="loading">جارِ استعادة الجلسة…</div>';
-    try{
-      const fresh = await loadUsers(true);
-      user = fresh.find(u=>u.username===savedUsername);
-      if(user){
-        currentUser = {username: user.username, displayName: user.displayName, role: user.role};
-        await startApp();
-        return;
+  const savedSession = getSavedSession();
+  if(savedSession && savedSession.username){
+    // نستعيد الجلسة فورًا من البيانات المحفوظة محليًا نفسها — بدون أي
+    // انتظار للشبكة إطلاقًا، حتى لو كان الحساب موظفًا حقيقيًا وليس
+    // المدير المدمج فقط. نتحقق من صحة الحساب (الدور، الاسم) بصمت في
+    // الخلفية بعد ذلك دون مقاطعة الجلسة أو تأخير فتح التطبيق.
+    currentUser = {username: savedSession.username, displayName: savedSession.displayName, role: savedSession.role};
+    await startApp();
+    loadUsers(true).then(fresh=>{
+      const updated = fresh.find(u=>u.username===savedSession.username);
+      if(updated && currentUser && currentUser.username===savedSession.username){
+        currentUser.role = updated.role;
+        currentUser.displayName = updated.displayName;
+        saveSession(currentUser);
+        renderShellRefreshOnly();
+      }else if(!updated){
+        // الحساب لم يعد موجودًا (حُذف مثلًا) — سجّل خروجًا فعليًا
+        logout();
       }
-    }catch(e){ /* تجاهل وانتقل لشاشة الدخول العادية */ }
-    // تعذّر العثور على الحساب (ربما حُذف) — امسح الجلسة المحفوظة القديمة
-    clearSession();
+    }).catch(()=>{});
+    return;
   }
 
-  // لا توجد جلسة محفوظة (أو تعذّرت استعادتها) — اعرض شاشة الدخول فورًا
-  // بحساب المدير المدمج (يعمل دائمًا دون شبكة)، بدل تجميد الصفحة بانتظار
-  // Google Apps Script الذي يُعرف ببطء بدء التشغيل البارد أحيانًا. تُجلب
-  // قائمة الحسابات الحقيقية من السحابة بصمت في الخلفية، وتُحدَّث الشاشة
-  // تلقائيًا فور وصولها إن لم يكن المستخدم قد بدأ الكتابة بعد.
+  // لا توجد جلسة محفوظة — اعرض شاشة الدخول فورًا بحساب المدير المدمج
+  // (يعمل دائمًا دون شبكة)، بدل تجميد الصفحة بانتظار Google Apps Script
+  // الذي يُعرف ببطء بدء التشغيل البارد أحيانًا. تُجلب قائمة الحسابات
+  // الحقيقية من السحابة بصمت في الخلفية، وتُحدَّث الشاشة تلقائيًا فور
+  // وصولها إن لم يكن المستخدم قد بدأ الكتابة بعد.
   const fallbackUsers = usersCache || [builtinAdmin()];
   renderLogin(fallbackUsers);
   loadUsers(true).then(fresh=>{
