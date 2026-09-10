@@ -367,9 +367,38 @@
   .inline-form{display:grid;grid-template-columns:repeat(4,1fr) auto;gap:8px;align-items:end;margin-top:12px;}
   @media(max-width:760px){.inline-form{grid-template-columns:1fr 1fr;}}
   /* ---------- Print report (PDF export) ----------
-     ملاحظة: محتوى التقرير الفعلي يُبنى ويُنسَّق بالكامل داخل تبويب
-     منفصل يفتحه exportMonthPdf() (بأنماط CSS خاصة به)، وليس ضمن هذه
-     الصفحة، لتفادي حجب window.print() داخل إطار المعاينة المعزول. */
+     محتوى التقرير يُبنى داخل #printArea (مخفي أثناء الاستخدام العادي)،
+     ثم تُظهره قواعد @media print فقط عند الطباعة الفعلية، وتُخفي بقية
+     التطبيق تمامًا في تلك اللحظة — فتصبح صفحة الطباعة/PDF نظيفة تمامًا. */
+  #printArea{display:none;}
+  .pr-header{display:flex;align-items:center;gap:14px;border-bottom:3px solid var(--teal);padding-bottom:12px;margin-bottom:16px;}
+  .pr-header img{width:56px;height:56px;flex:none;}
+  .pr-header .pr-org{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:3px;}
+  .pr-header h1{margin:0;font-size:21px;color:var(--teal);}
+  .pr-header .pr-meta{font-size:12px;color:var(--muted);margin-top:3px;}
+  .pr-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;max-width:340px;}
+  .pr-stat{border:1px solid var(--line);border-radius:6px;padding:8px 10px;}
+  .pr-stat .pr-label{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:3px;}
+  .pr-stat .pr-value{font-size:17px;font-weight:800;color:var(--teal);font-family:'IBM Plex Mono',monospace;}
+  .pr-section-title{font-size:14.5px;font-weight:800;color:var(--teal);margin:18px 0 8px;border-inline-start:4px solid var(--teal);padding-inline-start:8px;}
+  .pr-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px;}
+  .pr-table th{background:var(--teal);color:#fff;padding:7px 6px;text-align:center;font-size:11.5px;font-weight:700;letter-spacing:.2px;}
+  .pr-table td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:center;vertical-align:middle;}
+  .pr-table tr:nth-child(even) td{background:#F1F8F5;}
+  .pr-table tfoot td{font-weight:800;border-top:2px solid var(--teal);background:#fff;text-align:center;}
+  .pr-num{font-family:'IBM Plex Mono',monospace;text-align:center !important;direction:ltr;unicode-bidi:plaintext;}
+  .pr-footer{margin-top:24px;padding-top:10px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);}
+  .pr-signatures{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:34px;}
+  .pr-sign-line{border-top:1px solid var(--ink);padding-top:6px;font-size:12px;color:var(--muted);}
+  @media print{
+    body > #app, body > .save-flag, body > #modalRoot, body > #dialogRoot{display:none !important;}
+    #printArea{display:block !important;}
+    body{border-top:none;background:#fff;}
+    * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+    @page{ size:A4; margin:14mm; }
+    .pr-table{page-break-inside:auto;}
+    .pr-table tr{page-break-inside:avoid;}
+  }
 </style>
 </head>
 <body>
@@ -377,6 +406,7 @@
 <div class="save-flag" id="saveFlag">تم الحفظ</div>
 <div id="modalRoot"></div>
 <div id="dialogRoot"></div>
+<div id="printArea"></div>
 
 <script>
 /* شعار الهيئة الدائمة المستقلة لحقوق الإنسان (مضمّن من ملف المستخدم) */
@@ -498,7 +528,14 @@ function renderLogin(users){
     const errBox = document.getElementById('loginError');
     errBox.innerHTML = '';
     if(!uname || !pass){ errBox.innerHTML = `<div class="auth-error">${currentLang==='en'?'Enter your username and password.':'أدخل اسم المستخدم وكلمة المرور.'}</div>`; return; }
-    const user = users.find(u=>u.username===uname);
+    let user = users.find(u=>u.username===uname);
+    if(!user){
+      // ربما لم تصل قائمة الحسابات من السحابة بعد (لأن شاشة الدخول تظهر فورًا
+      // دون انتظار الشبكة) — نحاول تحديثها مرة واحدة بصمت قبل رفض الدخول
+      const fresh = await loadUsers(true);
+      users = fresh;
+      user = users.find(u=>u.username===uname);
+    }
     if(!user){ errBox.innerHTML = `<div class="auth-error">${currentLang==='en'?'Username not found. Check spelling (no spaces, lowercase).':'اسم المستخدم غير موجود. تحقق من كتابته (بدون مسافات، حروف صغيرة).'}</div>`; return; }
     const h = hashPass(pass);
     if(h !== user.passHash){ errBox.innerHTML = `<div class="auth-error">${currentLang==='en'?'Incorrect password.':'كلمة المرور غير صحيحة.'}</div>`; return; }
@@ -1504,8 +1541,9 @@ async function openCloudSyncModal(){
         StorageAdapter.setCloudUrl('');
         return;
       }
+    } else {
+      await StorageAdapter.probe();
     }
-    await StorageAdapter.probe();
     // ادفع نسخة العمل الحالية إلى السحابة فورًا حتى لا تُفقد أي بيانات محلية سابقة
     if(url){
       state.idCounter = idCounter;
@@ -2200,9 +2238,6 @@ function exportMonthPdf(key){
   const preparedLabel = currentLang==='en' ? 'Prepared by' : 'المعدّ';
   const approvedLabel = currentLang==='en' ? 'Approved by' : 'المعتمد';
   const noDataLabel = currentLang==='en' ? 'No entries recorded for this month.' : 'لا توجد عمليات مسجَّلة لهذا الشهر.';
-  const printHintLabel = currentLang==='en'
-    ? 'Use your browser\'s Print (Ctrl/Cmd+P) and choose "Save as PDF" as the destination.'
-    : 'استخدم أمر الطباعة في متصفحك (Ctrl+P أو Cmd+P) واختر «حفظ كـ PDF» كوجهة.';
 
   const reportBody = `
     <div class="pr-header">
@@ -2244,74 +2279,24 @@ function exportMonthPdf(key){
     <div class="pr-footer">${esc(t('orgName'))} — ${esc(currentLang==='en'?'Automatically generated report from the expense tracking system.':'تقرير مُنشأ تلقائيًا من نظام مصروفات الهيئة.')}</div>
   `;
 
-  // نبني مستندًا مستقلاً بالكامل ونفتحه في تبويب جديد بدل استدعاء
-  // window.print() على الصفحة الحالية مباشرة — لأن إطار المعاينة المعزول
-  // الذي يعرض هذا التطبيق يحجب نافذة الطباعة تمامًا (بلا أي رسالة خطأ)،
-  // تمامًا كما كان يحجب confirm/alert سابقًا. تبويب منفصل حقيقي في المتصفح
-  // لا يخضع لهذا الحجب، ويمكن دائمًا طباعته أو حفظه كـ PDF يدويًا.
-  const fullHtml = `<!DOCTYPE html>
-<html lang="${currentLang==='en'?'en':'ar'}" dir="${currentLang==='en'?'ltr':'rtl'}">
-<head>
-<meta charset="UTF-8">
-<title>${esc(reportTitle)}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-<style>
-  *{box-sizing:border-box;}
-  body{font-family:'Cairo',sans-serif;margin:0;padding:24px;color:#0D2621;background:#fff;}
-  .pr-print-hint{
-    background:#DEF1EA;color:#045847;border:1px solid #0E9077;border-radius:8px;
-    padding:10px 14px;margin-bottom:18px;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:10px;
-  }
-  .pr-print-hint button{
-    background:#06755C;color:#fff;border:none;border-radius:6px;padding:8px 16px;
-    font-family:inherit;font-size:13px;cursor:pointer;flex:none;
-  }
-  .pr-header{display:flex;align-items:center;gap:14px;border-bottom:3px solid #06755C;padding-bottom:12px;margin-bottom:16px;}
-  .pr-header img{width:56px;height:56px;flex:none;}
-  .pr-header .pr-org{font-size:12px;color:#5C7069;font-weight:600;margin-bottom:3px;}
-  .pr-header h1{margin:0;font-size:21px;color:#06755C;}
-  .pr-header .pr-meta{font-size:12px;color:#5C7069;margin-top:3px;}
-  .pr-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;max-width:340px;}
-  .pr-stat{border:1px solid #D6E7E1;border-radius:6px;padding:8px 10px;}
-  .pr-stat .pr-label{font-size:11px;color:#5C7069;font-weight:700;margin-bottom:3px;}
-  .pr-stat .pr-value{font-size:17px;font-weight:800;color:#06755C;font-family:'IBM Plex Mono',monospace;}
-  .pr-section-title{font-size:14.5px;font-weight:800;color:#06755C;margin:18px 0 8px;border-inline-start:4px solid #06755C;padding-inline-start:8px;}
-  .pr-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px;border-radius:6px;overflow:hidden;box-shadow:0 1px 3px rgba(13,38,33,.08);}
-  .pr-table th{background:#06755C;color:#fff;padding:7px 6px;text-align:center;font-size:11.5px;font-weight:700;letter-spacing:.2px;}
-  .pr-table td{padding:6px 6px;border-bottom:1px solid #D6E7E1;text-align:center;vertical-align:middle;}
-  .pr-table tr:nth-child(even) td{background:#F1F8F5;}
-  .pr-table tfoot td{font-weight:800;border-top:2px solid #06755C;background:#fff;text-align:center;}
-  .pr-num{font-family:'IBM Plex Mono',monospace;text-align:center !important;direction:ltr;unicode-bidi:plaintext;}
-  .pr-footer{margin-top:24px;padding-top:10px;border-top:1px solid #D6E7E1;font-size:11px;color:#5C7069;}
-  .pr-signatures{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:34px;}
-  .pr-sign-line{border-top:1px solid #0D2621;padding-top:6px;font-size:12px;color:#5C7069;}
-  @media print{
-    .pr-print-hint{display:none;}
-    @page{ size:A4; margin:14mm; }
-    * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
-  }
-</style>
-</head>
-<body>
-  <div class="pr-print-hint">
-    <span>${esc(printHintLabel)}</span>
-    <button onclick="window.print()">🖨️ ${currentLang==='en'?'Print / Save PDF':'طباعة / حفظ PDF'}</button>
-  </div>
-  ${reportBody}
-</body>
-</html>`;
+  // نضع محتوى التقرير في #printArea (مخفي عاديًا) ونستدعي window.print()
+  // على الصفحة الحالية مباشرة — بلا فتح تبويب جديد إطلاقًا، فلا حاجة لإذن
+  // النوافذ المنبثقة (Pop-ups) نهائيًا. عند انتهاء الطباعة (أو إلغائها)
+  // نُعيد إخفاء منطقة الطباعة وعنوان الصفحة الأصلي تلقائيًا.
+  document.getElementById('printArea').innerHTML = reportBody;
 
-  const win = window.open('', '_blank');
-  if(!win){
-    uiAlert(currentLang==='en'
-      ? 'Could not open a new tab. Please allow pop-ups for this site in your browser, then try again.'
-      : 'تعذّر فتح تبويب جديد. اسمح بالنوافذ المنبثقة (Pop-ups) لهذا الموقع من إعدادات متصفحك، ثم حاول مجددًا.');
-    return;
-  }
-  win.document.open();
-  win.document.write(fullHtml);
-  win.document.close();
+  const originalTitle = document.title;
+  document.title = reportTitle; // يقترح اسمًا مناسبًا للملف عند "حفظ كـ PDF"
+
+  const cleanup = ()=>{
+    document.getElementById('printArea').innerHTML = '';
+    document.title = originalTitle;
+  };
+  window.addEventListener('afterprint', cleanup, {once:true});
+  // بعض المتصفحات لا تُطلق afterprint بشكل موثوق دومًا؛ ننظّف احتياطيًا بعد مهلة
+  setTimeout(cleanup, 60000);
+
+  window.print();
 }
 
 /* =========================================================
@@ -2625,10 +2610,20 @@ async function startApp(){
 }
 
 async function boot(){
-  document.getElementById('app').innerHTML = '<div class="loading">جارِ التحقق من الجلسة…</div>';
-  await StorageAdapter.probe();
-  const users = await loadUsers();
-  renderLogin(users);
+  // نعرض شاشة الدخول فورًا بحساب المدير المدمج (يعمل دائمًا دون شبكة)، بدل
+  // تجميد الصفحة بانتظار Google Apps Script الذي يُعرف ببطء بدء التشغيل
+  // البارد أحيانًا. تُجلب قائمة الحسابات الحقيقية من السحابة بصمت في الخلفية،
+  // وتُحدَّث الشاشة تلقائيًا فور وصولها إن لم يكن المستخدم قد بدأ الكتابة بعد.
+  const fallbackUsers = usersCache || [builtinAdmin()];
+  renderLogin(fallbackUsers);
+  loadUsers(true).then(fresh=>{
+    const userField = document.getElementById('liUser');
+    const passField = document.getElementById('liPass');
+    const stillEmpty = userField && passField && !userField.value && !passField.value;
+    if(stillEmpty && JSON.stringify(fresh) !== JSON.stringify(fallbackUsers)){
+      renderLogin(fresh);
+    }
+  }).catch(()=>{});
 }
 
 document.addEventListener('click', (e)=>{
