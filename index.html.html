@@ -645,6 +645,7 @@ const TRANSLATIONS = {
   advanceThisMonth: {ar:'المقدّم المستلم هذا الشهر', en:'Advance received this month'},
   carriedOver: {ar:'المرحّل من الأشهر السابقة', en:'Carried over from previous months'},
   finalBalance: {ar:'الرصيد النهائي', en:'Final balance'},
+  markSettled: {ar:'تمّت التسوية', en:'Settled'},
   statusPaid: {ar:'سددت', en:'Paid'},
   statusUnpaid: {ar:'لم تسدد', en:'Unpaid'},
   login: {ar:'تسجيل الدخول', en:'Log in'},
@@ -868,7 +869,7 @@ const DEFAULT_CATEGORIES = [
   {code:'2211', nameAr:'تيليفون / فاكس', nameEn:'Telephone / Fax'},
   {code:'2231', nameAr:'خدمات انترنت / برامج مدفوعة', nameEn:'Internet services / Paid software'},
   {code:'2311', nameAr:'أدوات مكتبية', nameEn:'Office supplies'},
-  {code:'2511', nameAr:'مشتريات البقالة', nameEn:'Grocery purchases'},
+  {code:'2511', nameAr:'مشتريات الضيافة', nameEn:'Entertainment Purchases'},
   {code:'2611', nameAr:'الوقود / مواصلات', nameEn:'Fuel / Transportation'},
   {code:'2711', nameAr:'سيارة / صيانة', nameEn:'Vehicle / Maintenance'},
   {code:'2721', nameAr:'المبنى / صيانة', nameEn:'Building / Maintenance'},
@@ -1029,6 +1030,10 @@ async function loadState(){
       if(!parsed.categories || !parsed.categories.length){
         parsed.categories = DEFAULT_CATEGORIES.map(c=>({...c}));
       }
+      // ترحيل: إعادة تسمية تصنيف 2511 إلى "مشتريات الضيافة" لأي بيانات
+      // قديمة كانت تحمل الاسم السابق "مشتريات البقالة"
+      const cat2511 = parsed.categories.find(c=>c.code==='2511');
+      if(cat2511){ cat2511.nameAr = 'مشتريات الضيافة'; cat2511.nameEn = 'Entertainment Purchases'; }
       const keys = Object.keys(parsed.years).sort();
       activeYear = parsed.lastActiveYear && parsed.years[parsed.lastActiveYear] ? parsed.lastActiveYear : (keys[keys.length-1] || '2026');
       ensureYearExists(parsed, activeYear);
@@ -1192,32 +1197,57 @@ function monthStats(key){
   return {paid, unpaid, total, count: entries.length, byEmployee, byCategory};
 }
 
+// الموظفون المستثنون من نظام المقدّم/الترحيل تمامًا (يُعرض لهم إجمالي
+// المصروف فقط بلا مقدّم ولا رصيد مرحّل) — حاليًا IPHRC فقط، لأنه يمثّل
+// حساب الهيئة المباشر وليس موظفًا يستلم عهدة نقدية.
+const ADVANCE_EXEMPT_EMPLOYEES = ['IPHRC'];
+function isAdvanceTracked(emp){
+  return !ADVANCE_EXEMPT_EMPLOYEES.includes(emp);
+}
+
 // المبلغ المرحّل لموظف معيّن من الأشهر السابقة في نفس السنة: مجموع
-// (المقدّم المستلم − المصروف) لكل شهر قبل الشهر المحدَّد. يُعاد التصفير
-// تلقائيًا في بداية كل سنة (لا ترحيل بين السنوات حاليًا).
+// (المقدّم المستلم − المصروف) تراكميًا شهرًا بعد شهر. إن انتهى شهر
+// برصيد سالب ووُسم بأنه "تمّت تسويته" (settlements)، يُصفَّر قبل
+// الانتقال للشهر التالي بدل ترحيل العجز. الفائض الموجب يُرحَّل دائمًا.
+// يُعاد التصفير تلقائيًا في بداية كل سنة (لا ترحيل بين السنوات حاليًا).
 function employeeCarryIn(emp, uptoMonthKey){
+  if(!isAdvanceTracked(emp)) return 0;
   let balance = 0;
   for(const mo of MONTHS){
     if(mo.key === uptoMonthKey) break;
     const s = monthStats(mo.key);
     const adv = (yearMonths()[mo.key].advances && yearMonths()[mo.key].advances[emp]) || 0;
     const spent = s.byEmployee[emp] || 0;
-    balance += adv - spent;
+    const monthEnding = balance + adv - spent;
+    const settled = !!(yearMonths()[mo.key].settlements && yearMonths()[mo.key].settlements[emp]);
+    balance = (monthEnding < 0 && settled) ? 0 : monthEnding;
   }
   return balance;
 }
 
+function isEmployeeSettled(emp, monthKey){
+  const mo = yearMonths()[monthKey];
+  return !!(mo.settlements && mo.settlements[emp]);
+}
+
 // قائمة موحّدة بملخص كل موظف لشهر معيّن (مصروف/مقدّم/مرحّل/رصيد نهائي)،
 // يستخدمها كل من عرض الشهر وتصدير PDF لتفادي ازدواج المنطق.
+// الموظفون المستثنون (IPHRC) يعودون بـ advance/carryIn/diff = null
+// للدلالة على أن نظام المقدّم لا يُطبَّق عليهم إطلاقًا.
 function employeeMonthBreakdown(key){
   const s = monthStats(key);
   const mo = yearMonths()[key];
   return Object.keys(s.byEmployee).map(emp=>{
+    const spent = s.byEmployee[emp];
+    if(!isAdvanceTracked(emp)){
+      return {emp, spent, advance:null, carryIn:null, diff:null, settled:false, tracked:false};
+    }
     const advance = (mo.advances && mo.advances[emp]) || 0;
     const carryIn = employeeCarryIn(emp, key);
-    const spent = s.byEmployee[emp];
-    const diff = (advance + carryIn) - spent;
-    return {emp, spent, advance, carryIn, diff};
+    const rawDiff = (advance + carryIn) - spent;
+    const settled = isEmployeeSettled(emp, key);
+    const diff = (rawDiff < 0 && settled) ? 0 : rawDiff;
+    return {emp, spent, advance, carryIn, diff, rawDiff, settled, tracked:true};
   });
 }
 
@@ -1225,18 +1255,18 @@ function yearStats(){
   let paid=0, unpaid=0, count=0;
   const byEmployee = {};
   const byCategory = {};
-  state.employees.forEach(emp=> byEmployee[emp] = {spent:0, advance:0});
+  state.employees.forEach(emp=> byEmployee[emp] = {spent:0, advance:0, tracked:isAdvanceTracked(emp)});
   MONTHS.forEach(mo=>{
     const s = monthStats(mo.key);
     paid += s.paid; unpaid += s.unpaid; count += s.count;
     const adv = yearMonths()[mo.key].advances || {};
     Object.keys(s.byEmployee).forEach(emp=>{
-      if(!byEmployee[emp]) byEmployee[emp] = {spent:0, advance:0};
+      if(!byEmployee[emp]) byEmployee[emp] = {spent:0, advance:0, tracked:isAdvanceTracked(emp)};
       byEmployee[emp].spent += s.byEmployee[emp];
     });
     Object.keys(adv).forEach(emp=>{
-      if(!byEmployee[emp]) byEmployee[emp] = {spent:0, advance:0};
-      byEmployee[emp].advance += Number(adv[emp])||0;
+      if(!byEmployee[emp]) byEmployee[emp] = {spent:0, advance:0, tracked:isAdvanceTracked(emp)};
+      if(byEmployee[emp].tracked) byEmployee[emp].advance += Number(adv[emp])||0;
     });
     Object.keys(s.byCategory).forEach(code=>{
       byCategory[code] = (byCategory[code]||0) + s.byCategory[code];
@@ -2361,6 +2391,12 @@ function renderSummary(){
         <tbody>
           ${Object.keys(y.byEmployee).map(emp=>{
             const d = y.byEmployee[emp];
+            if(!d.tracked){
+              return `<tr>
+                <td data-label="${t('employee')}">${esc(emp)}</td>
+                <td class="num" data-label="${t('annualSpent')}" colspan="3">${fmt(d.spent)}</td>
+              </tr>`;
+            }
             const diff = d.advance - d.spent;
             return `<tr>
               <td data-label="${t('employee')}">${esc(emp)}</td>
@@ -2437,13 +2473,26 @@ function renderMonth(key){
     </tr>
   `).join('');
 
-  const empRows = employeeMonthBreakdown(key).map(({emp,spent,advance,carryIn,diff})=>{
+  const empRows = employeeMonthBreakdown(key).map(({emp,spent,advance,carryIn,diff,rawDiff,settled,tracked})=>{
+    if(!tracked){
+      return `<tr>
+        <td data-label="${t('employee')}">${esc(emp)}</td>
+        <td class="num" data-label="${t('totalSpend')}" colspan="4">${fmt(spent)}</td>
+      </tr>`;
+    }
+    const settleToggle = rawDiff < 0 ? `
+      <label style="display:block;font-size:10.5px;font-weight:600;margin-top:4px;cursor:pointer;color:var(--muted);">
+        <input type="checkbox" data-settle-emp="${esc(emp)}" ${settled?'checked':''} style="vertical-align:middle;margin-inline-end:4px;">${t('markSettled')}
+      </label>` : '';
+    const balanceDisplay = settled
+      ? `<span style="text-decoration:line-through;opacity:.5;font-weight:500;">${fmt(rawDiff)}</span> <span class="diff-pos">${fmt(diff)}</span>`
+      : fmt(diff);
     return `<tr>
       <td data-label="${t('employee')}">${esc(emp)}</td>
       <td class="num" data-label="${t('totalSpend')}">${fmt(spent)}</td>
       <td data-label="${t('advanceThisMonth')}"><input class="cell-input num" type="number" step="0.01" data-adv-emp="${esc(emp)}" value="${advance}" style="text-align:left;direction:ltr;background:#EAF6F0;border:1px solid var(--gold-soft);border-radius:5px;"></td>
       <td class="num ${carryIn>=0?'diff-pos':'diff-neg'}" data-label="${t('carriedOver')}">${fmt(carryIn)}</td>
-      <td class="num ${diff>=0?'diff-pos':'diff-neg'}" style="font-weight:800;" data-label="${t('finalBalance')}">${fmt(diff)}</td>
+      <td class="num ${diff>=0?'diff-pos':'diff-neg'}" style="font-weight:800;" data-label="${t('finalBalance')}">${balanceDisplay}${settleToggle}</td>
     </tr>`;
   }).join('');
 
@@ -2614,6 +2663,18 @@ function renderMonth(key){
     });
     input.addEventListener('blur', ()=>{ commitEditsNow(); });
     input.addEventListener('keydown', e=>{ if(e.key==='Enter') input.blur(); });
+  });
+
+  document.querySelectorAll('[data-settle-emp]').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      const emp = cb.dataset.settleEmp;
+      update(st=>{
+        const mo = st.years[activeYear].months[key];
+        if(!mo.settlements) mo.settlements = {};
+        mo.settlements[emp] = cb.checked;
+        logActivity(cb.checked ? 'تسوية رصيد موظف' : 'إلغاء تسوية رصيد موظف', emp + ' — ' + monthName(moDef));
+      });
+    });
   });
 }
 
