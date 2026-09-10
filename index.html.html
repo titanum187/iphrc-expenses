@@ -31,7 +31,7 @@
     -webkit-font-smoothing:antialiased;
     border-top:4px solid var(--teal);
   }
-  .num{font-family:'IBM Plex Mono','Thmanyah Sans','Cairo',monospace;font-weight:600;}
+  .num{font-family:'IBM Plex Mono','Thmanyah Sans','Cairo',monospace;font-weight:600;text-align:center !important;direction:ltr;unicode-bidi:plaintext;}
   #app{max-width:1180px;margin:0 auto;padding:22px 22px 60px;}
 
   /* ---------- Header ---------- */
@@ -45,16 +45,16 @@
     width:56px;height:56px;flex:none;
   }
   .masthead h1{
-    margin:0;font-size:22px;font-weight:800;color:var(--teal);letter-spacing:.2px;line-height:1.35;
+    margin:0;font-size:23px;font-weight:800;color:var(--teal);letter-spacing:.2px;line-height:1.35;
   }
-  .masthead .org-name{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:2px;}
-  .masthead .sub{margin-top:4px;color:var(--muted);font-size:13.5px;}
+  .masthead .org-name{font-size:13px;color:var(--muted);font-weight:600;margin-bottom:2px;}
+  .masthead .sub{margin-top:4px;color:var(--muted);font-size:14px;}
   .masthead .actions{display:flex;gap:8px;flex-wrap:wrap;}
 
   button{
     font-family:inherit;cursor:pointer;border:1px solid var(--teal);
     background:var(--panel);color:var(--teal);border-radius:7px;
-    padding:8px 14px;font-size:13.5px;font-weight:600;transition:.15s;
+    padding:8px 14px;font-size:14px;font-weight:600;transition:.15s;
   }
   button:hover{background:var(--teal);color:#fff;}
   button.primary{background:var(--teal);color:#fff;}
@@ -71,7 +71,7 @@
     border-bottom:1px solid var(--line);
   }
   .tab{
-    padding:9px 16px;font-size:13.5px;font-weight:600;color:var(--muted);
+    padding:9px 16px;font-size:14.5px;font-weight:600;color:var(--muted);
     cursor:pointer;border-bottom:3px solid transparent;user-select:none;
     white-space:nowrap;
   }
@@ -99,7 +99,7 @@
     background:var(--panel);border:1px solid var(--line);border-radius:10px;
     padding:14px 16px 14px 16px;border-inline-start:4px solid var(--teal);
   }
-  .stat .label{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px;}
+  .stat .label{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:6px;}
   .stat .value{font-size:21px;font-weight:700;color:var(--teal);}
   .stat.gold{border-inline-start-color:var(--gold);}
   .stat.gold .value{color:var(--gold);}
@@ -111,32 +111,99 @@
   .panel{
     background:var(--panel);border:1px solid var(--line);border-radius:10px;
     padding:16px 18px;margin-bottom:18px;border-top:3px solid var(--teal);
+    box-shadow:0 1px 3px rgba(13,38,33,.06), 0 1px 2px rgba(13,38,33,.04);
   }
-  .panel h2{margin:0 0 12px;font-size:15px;color:var(--teal);font-weight:700;
+  .panel h2{margin:0 0 12px;font-size:16px;color:var(--teal);font-weight:700;
     display:flex;justify-content:space-between;align-items:center;}
   .panel h2 .hint{font-size:11.5px;color:var(--muted);font-weight:500;}
 
   /* ---------- Table ---------- */
-  table{width:100%;border-collapse:collapse;font-size:13px;}
-  thead th{
-    text-align:right;font-size:11.5px;color:var(--muted);font-weight:700;
-    padding:8px 8px;border-bottom:2px solid var(--line);white-space:nowrap;
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  .table-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:8px;}
+
+  /* ---------- Responsive card view for the entries table on narrow screens ----------
+     بدل الاعتماد على شريط تمرير أفقي (يختلف سلوكه حسب المتصفح وحجم الخط الفعلي
+     على كل جهاز)، يتحول جدول العمليات إلى بطاقات مكدَّسة رأسيًا على الشاشات
+     الضيقة — فلا حاجة لأي تمرير أفقي إطلاقًا مهما كان عرض الشاشة. */
+  @media (max-width: 900px){
+    .table-scroll{overflow-x:visible;border:none;border-radius:0;}
+    .table-scroll table{border:none;display:block;width:100%;}
+    #rowsBody, #rowsBody tr, #rowsBody td{display:block;width:100%;}
+    .table-scroll thead{display:none;}
+    #rowsBody tr{
+      border:1px solid var(--line);border-radius:10px;margin-bottom:12px;
+      padding:8px 12px;background:var(--panel);box-shadow:0 1px 3px rgba(13,38,33,.06);
+    }
+    #rowsBody td{
+      display:flex;justify-content:space-between;align-items:center;gap:10px;
+      padding:7px 2px;border-bottom:1px dashed #E3EFEA;text-align:end;
+    }
+    #rowsBody td:last-child{border-bottom:none;}
+    #rowsBody td::before{
+      content:attr(data-label);font-weight:700;color:var(--muted);font-size:11.5px;
+      flex:none;text-align:start;
+    }
+    #rowsBody td[data-label=""]::before{display:none;}
+    #rowsBody td[data-label=""]{justify-content:flex-end;}
+    #rowsBody td .cell-input, #rowsBody td select, #rowsBody td textarea{width:auto;max-width:62%;text-align:end;}
+    #rowsBody td textarea.cell-input{max-width:100%;width:100%;text-align:start;margin-top:4px;}
+    tfoot{display:block;width:100%;}
+    tfoot tr{display:flex;justify-content:space-between;padding:4px 2px;}
+    tfoot td{display:block;border:none !important;}
+    tfoot td:empty{display:none;}
+
+    /* نفس فكرة البطاقات لجداول الملخصات الأصغر (الموظفين والتصنيفات) */
+    .emp-table, .emp-table thead, .emp-table tbody, .emp-table tr, .emp-table th, .emp-table td{display:block;width:100%;}
+    .emp-table thead{display:none;}
+    .emp-table tbody tr{
+      border:1px solid var(--line);border-radius:10px;margin-bottom:10px;
+      padding:8px 12px;background:var(--panel);box-shadow:0 1px 3px rgba(13,38,33,.06);
+    }
+    .emp-table tbody td{
+      display:flex;justify-content:space-between;align-items:center;gap:10px;
+      padding:6px 2px;border-bottom:1px dashed #E3EFEA;text-align:end;
+    }
+    .emp-table tbody td:last-child{border-bottom:none;}
+    .emp-table tbody td::before{
+      content:attr(data-label);font-weight:700;color:var(--muted);font-size:11.5px;
+      flex:none;text-align:start;
+    }
+    .emp-table tbody td input.cell-input{width:auto;max-width:55%;}
   }
-  tbody td{padding:6px 8px;border-bottom:1px solid #E3EFEA;vertical-align:middle;}
-  tbody tr:hover{background:#F1F8F5;}
+  thead th{
+    text-align:center;font-size:11.5px;color:var(--teal-2);font-weight:800;
+    padding:10px 8px;border-bottom:2px solid var(--teal);white-space:nowrap;
+    background:var(--gold-soft);letter-spacing:.2px;
+  }
+  thead th:first-child{border-start-start-radius:6px;}
+  thead th:last-child{border-start-end-radius:6px;}
+  thead th.num{text-align:center !important;}
+  tbody td{padding:8px 8px;border-bottom:1px solid #E3EFEA;vertical-align:middle;text-align:center;}
+  tbody tr:nth-child(even) td{background:var(--paper);}
+  tbody tr:hover td{background:#E4F1EA;}
   tbody tr.example td{color:var(--muted);font-style:italic;}
-  tfoot td{padding:9px 8px;font-weight:700;border-top:2px solid var(--teal);}
+  tfoot td{padding:10px 8px;font-weight:800;border-top:2px solid var(--teal);background:var(--gold-soft);}
+  tfoot td:first-child{border-end-start-radius:6px;}
+  tfoot td:last-child{border-end-end-radius:6px;}
 
   .cell-input{
     width:100%;border:1px solid transparent;background:transparent;
-    font-family:inherit;font-size:13px;padding:5px 6px;border-radius:5px;color:var(--ink);
+    font-family:inherit;font-size:13.5px;padding:5px 6px;border-radius:5px;color:var(--ink);
+    text-overflow:ellipsis;text-align:center;
   }
   .cell-input:hover{border-color:var(--line);}
-  .cell-input:focus{outline:none;border-color:var(--gold);background:#fff;}
-  select.cell-input{cursor:pointer;}
-  input[type=number].cell-input{font-family:'IBM Plex Mono';text-align:left;direction:ltr;}
+  .cell-input:focus{outline:none;border-color:var(--gold);background:#fff;text-overflow:clip;}
+  select.cell-input{cursor:pointer;text-align-last:center;}
+  input[type=number].cell-input{font-family:'IBM Plex Mono';text-align:center;direction:ltr;}
+  input[type=date].cell-input{text-align:center;}
+  input[type=text].cell-input{min-width:70px;}
+  textarea.cell-input{
+    resize:none;overflow:hidden;white-space:pre-wrap;word-break:break-word;
+    line-height:1.4;min-height:30px;min-width:110px;font-family:inherit;display:block;
+    font-size:12.5px;
+  }
 
-  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;border:none;cursor:pointer;font-family:inherit;}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:inherit;white-space:nowrap;}
   .badge.paid{background:var(--ok-bg);color:var(--ok);}
   .badge.unpaid{background:var(--bad-bg);color:var(--bad);}
 
@@ -149,7 +216,7 @@
 
   .col-amount{width:90px;}
   .col-date{width:118px;}
-  .col-status{width:96px;}
+  .col-status{width:96px;white-space:nowrap;}
   .col-num{width:34px;text-align:center;color:var(--muted);}
   .col-receipt{width:64px;text-align:center;}
 
@@ -186,7 +253,7 @@
 
   /* employee summary mini table */
   .emp-table td, .emp-table th{padding:7px 8px;}
-  .emp-table th{font-size:11px;}
+  .emp-table th{font-size:12px;}
   .diff-pos{color:var(--ok);font-weight:700;}
   .diff-neg{color:var(--bad);font-weight:700;}
 
@@ -211,7 +278,7 @@
   .month-card:hover{border-color:var(--gold);transform:translateY(-1px);}
   .month-card .m-name{font-weight:700;color:var(--teal);font-size:14px;margin-bottom:8px;}
   .month-card .m-total{font-size:18px;font-weight:700;}
-  .month-card .m-count{font-size:11.5px;color:var(--muted);margin-top:4px;}
+  .month-card .m-count{font-size:12.5px;color:var(--muted);margin-top:4px;}
   .m-bar-track{height:5px;background:var(--paper);border-radius:3px;margin-top:8px;overflow:hidden;}
   .m-bar-fill{height:100%;background:var(--teal);border-radius:3px;transition:width .3s;}
   @media(max-width:820px){.month-grid{grid-template-columns:repeat(2,1fr);}}
@@ -296,9 +363,13 @@
   .account-wrap{position:relative;}
 
   .users-table td, .users-table th{padding:8px;}
-  .users-table select{padding:5px 8px;font-size:12.5px;border-radius:6px;border:1px solid var(--line);}
+  .users-table select{padding:5px 8px;font-size:13.5px;border-radius:6px;border:1px solid var(--line);}
   .inline-form{display:grid;grid-template-columns:repeat(4,1fr) auto;gap:8px;align-items:end;margin-top:12px;}
   @media(max-width:760px){.inline-form{grid-template-columns:1fr 1fr;}}
+  /* ---------- Print report (PDF export) ----------
+     ملاحظة: محتوى التقرير الفعلي يُبنى ويُنسَّق بالكامل داخل تبويب
+     منفصل يفتحه exportMonthPdf() (بأنماط CSS خاصة به)، وليس ضمن هذه
+     الصفحة، لتفادي حجب window.print() داخل إطار المعاينة المعزول. */
 </style>
 </head>
 <body>
@@ -509,6 +580,7 @@ const TRANSLATIONS = {
   diffAdvSpend: {ar:'الفرق (المقدّم − المصروف)', en:'Difference (advance − spend)'},
   monthExpenseLog: {ar:'سجل مصروفات', en:'Expense log for'},
   exportCsv: {ar:'تصدير CSV', en:'Export CSV'},
+  exportPdf: {ar:'🖨️ تصدير PDF', en:'🖨️ Export PDF'},
   colNum: {ar:'م', en:'#'},
   colStatus: {ar:'الحالة', en:'Status'},
   colDate: {ar:'التاريخ', en:'Date'},
@@ -518,6 +590,12 @@ const TRANSLATIONS = {
   colAmount: {ar:'المبلغ', en:'Amount'},
   colEmployee: {ar:'الموظف المسؤول', en:'Assigned employee'},
   colNotes: {ar:'ملاحظات', en:'Notes'},
+  colCategory: {ar:'التصنيف', en:'Category'},
+  manageCategories: {ar:'إدارة التصنيفات', en:'Manage categories'},
+  categoryTotalsTitle: {ar:'إجمالي المصروفات حسب التصنيف', en:'Expense totals by category'},
+  categoryCode: {ar:'الرمز', en:'Code'},
+  categoryName: {ar:'اسم التصنيف', en:'Category name'},
+  uncategorized: {ar:'غير مصنّف', en:'Uncategorized'},
   colReceipt: {ar:'مسح الفاتورة', en:'Scan invoice'},
   total: {ar:'الإجمالي', en:'Total'},
   emptyMonth: {ar:'لا توجد عمليات مسجّلة بعد لهذا الشهر — اضغط «إضافة عملية» للبدء.', en:'No entries recorded yet for this month — click "Add entry" to start.'},
@@ -715,10 +793,37 @@ const MONTHS = [
 ];
 function monthName(mo){ return currentLang==='en' ? mo.nameEn : mo.name; }
 
-function mkEntry(status,date,invoice,vendor,details,amount,employee,notes){
-  return {id:'e'+(idCounter++), status, date, invoice, vendor, details, amount, employee, notes: notes||'', hasReceipt:false};
+function mkEntry(status,date,invoice,vendor,details,amount,employee,notes,category){
+  return {id:'e'+(idCounter++), status, date, invoice, vendor, details, amount, employee, notes: notes||'', category: category||'', hasReceipt:false};
 }
 let idCounter = 1;
+
+/* =========================================================
+   تصنيفات المصروفات (دليل الحسابات) — رموز رقمية ثابتة كما تعتمدها
+   الهيئة، مع اسم عربي وإنجليزي لكل تصنيف.
+   ========================================================= */
+const DEFAULT_CATEGORIES = [
+  {code:'2111', nameAr:'كهرباء', nameEn:'Electricity'},
+  {code:'2121', nameAr:'ماء', nameEn:'Water'},
+  {code:'2211', nameAr:'تيليفون / فاكس', nameEn:'Telephone / Fax'},
+  {code:'2231', nameAr:'خدمات انترنت / برامج مدفوعة', nameEn:'Internet services / Paid software'},
+  {code:'2311', nameAr:'أدوات مكتبية', nameEn:'Office supplies'},
+  {code:'2511', nameAr:'مشتريات البقالة', nameEn:'Grocery purchases'},
+  {code:'2611', nameAr:'الوقود / مواصلات', nameEn:'Fuel / Transportation'},
+  {code:'2711', nameAr:'سيارة / صيانة', nameEn:'Vehicle / Maintenance'},
+  {code:'2721', nameAr:'المبنى / صيانة', nameEn:'Building / Maintenance'},
+  {code:'3111', nameAr:'شراء اصول', nameEn:'Asset purchases'},
+];
+function categoryName(code){
+  if(!code) return currentLang==='en' ? 'Uncategorized' : 'غير مصنّف';
+  const cat = (state.categories||[]).find(c=>c.code===code);
+  if(!cat) return code;
+  return currentLang==='en' ? (cat.nameEn||cat.nameAr) : cat.nameAr;
+}
+function categoryLabel(code){
+  if(!code) return currentLang==='en' ? 'Uncategorized' : 'غير مصنّف';
+  return code + ' - ' + categoryName(code);
+}
 
 function seedData(){
   idCounter = 1;
@@ -809,6 +914,7 @@ function seedData(){
 
   return {
     employees: ['IPHRC','AMRO','KHAMIS'],
+    categories: DEFAULT_CATEGORIES.map(c=>({...c})),
     years: { '2026': { months: m } },
     idCounter
   };
@@ -859,6 +965,10 @@ async function loadState(){
         delete parsed.months;
       }
       if(!parsed.years) parsed.years = {};
+      // ترحيل: أضِف التصنيفات الافتراضية لأي بيانات قديمة لا تحتوي عليها
+      if(!parsed.categories || !parsed.categories.length){
+        parsed.categories = DEFAULT_CATEGORIES.map(c=>({...c}));
+      }
       const keys = Object.keys(parsed.years).sort();
       activeYear = parsed.lastActiveYear && parsed.years[parsed.lastActiveYear] ? parsed.lastActiveYear : (keys[keys.length-1] || '2026');
       ensureYearExists(parsed, activeYear);
@@ -1014,7 +1124,12 @@ function monthStats(key){
     if(!(e.employee in byEmployee)) byEmployee[e.employee] = 0;
     byEmployee[e.employee] += Number(e.amount)||0;
   });
-  return {paid, unpaid, total, count: entries.length, byEmployee};
+  const byCategory = {};
+  entries.forEach(e=>{
+    const code = e.category || '';
+    byCategory[code] = (byCategory[code]||0) + (Number(e.amount)||0);
+  });
+  return {paid, unpaid, total, count: entries.length, byEmployee, byCategory};
 }
 
 // المبلغ المرحّل لموظف معيّن من الأشهر السابقة في نفس السنة: مجموع
@@ -1032,9 +1147,24 @@ function employeeCarryIn(emp, uptoMonthKey){
   return balance;
 }
 
+// قائمة موحّدة بملخص كل موظف لشهر معيّن (مصروف/مقدّم/مرحّل/رصيد نهائي)،
+// يستخدمها كل من عرض الشهر وتصدير PDF لتفادي ازدواج المنطق.
+function employeeMonthBreakdown(key){
+  const s = monthStats(key);
+  const mo = yearMonths()[key];
+  return Object.keys(s.byEmployee).map(emp=>{
+    const advance = (mo.advances && mo.advances[emp]) || 0;
+    const carryIn = employeeCarryIn(emp, key);
+    const spent = s.byEmployee[emp];
+    const diff = (advance + carryIn) - spent;
+    return {emp, spent, advance, carryIn, diff};
+  });
+}
+
 function yearStats(){
   let paid=0, unpaid=0, count=0;
   const byEmployee = {};
+  const byCategory = {};
   state.employees.forEach(emp=> byEmployee[emp] = {spent:0, advance:0});
   MONTHS.forEach(mo=>{
     const s = monthStats(mo.key);
@@ -1048,12 +1178,22 @@ function yearStats(){
       if(!byEmployee[emp]) byEmployee[emp] = {spent:0, advance:0};
       byEmployee[emp].advance += Number(adv[emp])||0;
     });
+    Object.keys(s.byCategory).forEach(code=>{
+      byCategory[code] = (byCategory[code]||0) + s.byCategory[code];
+    });
   });
-  return {paid, unpaid, total: paid+unpaid, count, byEmployee};
+  return {paid, unpaid, total: paid+unpaid, count, byEmployee, byCategory};
 }
 
 function esc(s){
   return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// يُوسِّع ارتفاع حقل "التفاصيل" تلقائيًا حسب طول النص، بدل أن يُقطع النص
+// المكتوب داخل خانة بسطر واحد فقط.
+function autoGrowTextarea(el){
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
 }
 
 /* =========================================================
@@ -1417,14 +1557,14 @@ function openSearchModal(){
     const matches = [];
     MONTHS.forEach(mo=>{
       yearMonths()[mo.key].entries.forEach(e=>{
-        const hay = [e.vendor, e.invoice, e.details, e.notes, e.employee].join(' ').toLowerCase();
+        const hay = [e.vendor, e.invoice, e.details, e.notes, e.employee, e.category, categoryName(e.category)].join(' ').toLowerCase();
         if(hay.includes(q)) matches.push({mo, e});
       });
     });
     if(!matches.length){ resultsBox.innerHTML = '<div class="empty-note">لا توجد نتائج مطابقة.</div>'; return; }
     resultsBox.innerHTML = `
       <table>
-        <thead><tr><th>الشهر</th><th>التاريخ</th><th>المورّد</th><th>التفاصيل</th><th class="col-amount">المبلغ</th><th>الموظف</th><th></th></tr></thead>
+        <thead><tr><th>الشهر</th><th class="num">التاريخ</th><th>المورّد</th><th>التفاصيل</th><th class="col-amount num">المبلغ</th><th>الموظف</th><th></th></tr></thead>
         <tbody>
           ${matches.slice(0,100).map(({mo,e})=>`
             <tr>
@@ -1559,6 +1699,90 @@ async function openEmployeesModal(){
   };
   document.getElementById('empNewName').addEventListener('keydown', e=>{
     if(e.key==='Enter') document.getElementById('empAdd').click();
+  });
+}
+
+/* =========================================================
+   إدارة تصنيفات المصروفات (دليل الحسابات)
+   ========================================================= */
+async function openCategoriesModal(){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+    <div class="modal-overlay" id="modalOverlay">
+      <div class="modal-box" style="max-width:560px;">
+        <div class="modal-head"><strong>${t('manageCategories')}</strong><button class="icon-btn" id="modalClose">✕</button></div>
+        <div class="modal-body" style="text-align:right;background:#fff;">
+          <div id="catError"></div>
+          <div id="catListWrap"><div class="loading" style="padding:20px;">…</div></div>
+          <div class="inline-form" style="grid-template-columns:110px 1fr auto;">
+            <input id="catNewCode" type="text" placeholder="${t('categoryCode')}" style="border:1px solid var(--line);border-radius:7px;padding:9px 11px;font-family:'IBM Plex Mono',monospace;direction:ltr;text-align:left;">
+            <input id="catNewName" type="text" placeholder="${t('categoryName')}" style="border:1px solid var(--line);border-radius:7px;padding:9px 11px;font-family:inherit;">
+            <button class="primary" id="catAdd">${currentLang==='en'?'Add':'إضافة'}</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  const closeIt = ()=>{ root.innerHTML=''; };
+  document.getElementById('modalOverlay').onclick = (e)=>{ if(e.target.id==='modalOverlay') closeIt(); };
+  document.getElementById('modalClose').onclick = closeIt;
+
+  function refreshList(){
+    const wrap = document.getElementById('catListWrap');
+    const cats = state.categories || [];
+    if(!cats.length){
+      wrap.innerHTML = `<div class="empty-note">${currentLang==='en'?'No categories yet.':'لا يوجد تصنيفات بعد.'}</div>`;
+      return;
+    }
+    wrap.innerHTML = `
+      <table class="users-table">
+        <thead><tr><th class="num">${t('categoryCode')}</th><th>${t('categoryName')}</th><th></th></tr></thead>
+        <tbody>
+          ${cats.slice().sort((a,b)=>a.code.localeCompare(b.code)).map(c=>`
+            <tr>
+              <td class="num">${esc(c.code)}</td>
+              <td>${esc(categoryName(c.code))}</td>
+              <td><button class="icon-btn" data-del-cat="${esc(c.code)}" title="${t('delete')}">✕</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+    wrap.querySelectorAll('[data-del-cat]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const code = btn.dataset.delCat;
+        const ok = await uiConfirm(
+          currentLang==='en'
+            ? `Delete category "${code}"? Entries already using it keep the code, but it will show as an unknown category.`
+            : `حذف التصنيف "${code}"؟ العمليات المسجَّلة به سابقًا تبقى كما هي وسيظهر رمزها فقط دون اسم.`,
+          {danger:true, confirmText:t('delete')}
+        );
+        if(!ok) return;
+        update(st=>{ st.categories = st.categories.filter(c=>c.code!==code); });
+        refreshList();
+      });
+    });
+  }
+  refreshList();
+
+  document.getElementById('catAdd').onclick = ()=>{
+    const codeInput = document.getElementById('catNewCode');
+    const nameInput = document.getElementById('catNewName');
+    const code = codeInput.value.trim();
+    const name = nameInput.value.trim();
+    const err = document.getElementById('catError');
+    err.innerHTML = '';
+    if(!code || !name){ err.innerHTML = `<div class="auth-error">${currentLang==='en'?'Enter both a code and a name.':'أدخل الرمز والاسم معًا.'}</div>`; return; }
+    if((state.categories||[]).some(c=>c.code===code)){ err.innerHTML = `<div class="auth-error">${currentLang==='en'?'This code already exists.':'هذا الرمز موجود بالفعل.'}</div>`; return; }
+    update(st=>{
+      if(!st.categories) st.categories = [];
+      st.categories.push({code, nameAr: name, nameEn: name});
+      logActivity('إضافة تصنيف', code+' - '+name);
+    });
+    codeInput.value=''; nameInput.value='';
+    refreshList();
+  };
+  document.getElementById('catNewName').addEventListener('keydown', e=>{
+    if(e.key==='Enter') document.getElementById('catAdd').click();
   });
 }
 
@@ -1713,6 +1937,7 @@ function renderShell(innerHtml){
         <button class="ghost sm" id="btnImportJson" style="padding:8px 14px;">${t('importBackup')}</button>
         <input type="file" id="importFileInput" accept="application/json,.json" style="display:none;">
         ${isAdmin() ? `<button class="ghost sm" id="btnAddEmployee" style="padding:8px 14px;">${t('manageEmployees')}</button>` : ''}
+        ${isAdmin() ? `<button class="ghost sm" id="btnManageCategories" style="padding:8px 14px;">${t('manageCategories')}</button>` : ''}
         ${isAdmin() ? `<button class="ghost sm" id="btnManageUsers" style="padding:8px 14px;">${t('manageUsers')}</button>` : ''}
         ${isAdmin() ? `<button class="ghost sm" id="btnCloudSync" style="padding:8px 14px;">${t('cloudSync')}</button>` : ''}
         ${isAdmin() ? `<button class="ghost sm" id="btnActivityLog" style="padding:8px 14px;">${t('activityLog')}</button>` : ''}
@@ -1833,6 +2058,8 @@ function renderShell(innerHtml){
   }
   const addEmpBtn = document.getElementById('btnAddEmployee');
   if(addEmpBtn) addEmpBtn.onclick = openEmployeesModal;
+  const manageCatBtn = document.getElementById('btnManageCategories');
+  if(manageCatBtn) manageCatBtn.onclick = openCategoriesModal;
   const manageUsersBtn = document.getElementById('btnManageUsers');
   if(manageUsersBtn) manageUsersBtn.onclick = openUsersModal;
   const cloudSyncBtn = document.getElementById('btnCloudSync');
@@ -1891,6 +2118,9 @@ function importJson(input){
         return;
       }
       idCounter = parsed.idCounter || 1000;
+      if(!parsed.categories || !parsed.categories.length){
+        parsed.categories = DEFAULT_CATEGORIES.map(c=>({...c}));
+      }
       state = parsed;
       const yks = yearKeysSorted();
       activeYear = yks[yks.length-1] || '2026';
@@ -1911,8 +2141,8 @@ function exportMonthCsv(key){
   const mo = yearMonths()[key];
   const moDef = MONTHS.find(m=>m.key===key);
   const name = monthName(moDef);
-  let rows = [[t('colNum'),t('colStatus'),t('colDate'),t('colInvoice'),t('colVendor'),t('colDetails'),t('colAmount'),t('colEmployee'),t('colNotes')]];
-  mo.entries.forEach((e,i)=> rows.push([i+1, e.status==='سددت'?t('statusPaid'):t('statusUnpaid'), e.date,e.invoice,e.vendor,e.details,e.amount,e.employee,e.notes]));
+  let rows = [[t('colNum'),t('colStatus'),t('colDate'),t('colInvoice'),t('colVendor'),t('colDetails'),t('colAmount'),t('colEmployee'),t('colCategory'),t('colNotes')]];
+  mo.entries.forEach((e,i)=> rows.push([i+1, e.status==='سددت'?t('statusPaid'):t('statusUnpaid'), e.date,e.invoice,e.vendor,e.details,e.amount,e.employee,categoryLabel(e.category),e.notes]));
   const csv = '\uFEFF'+rows.map(r=>r.map(c=>`"${String(c==null?'':c).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
@@ -1920,6 +2150,168 @@ function exportMonthCsv(key){
   a.href = url; a.download = `${currentLang==='en'?'expenses':'مصروفات'}_${name}_${activeYear}.csv`;
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+/* =========================================================
+   تصدير تقرير الشهر بصيغة PDF احترافية
+   نعتمد على محرّك طباعة المتصفح نفسه (window.print → "حفظ كـ PDF")
+   بدل مكتبات PDF جافاسكربت، لأن تلك المكتبات لا تدعم رسم الحروف
+   العربية المتصلة بشكل صحيح وتُخرج نصًا عربيًا مشوَّهًا. محرّك
+   المتصفح يرسم العربية بشكل مثالي لأنه يعامل التقرير كصفحة HTML
+   عادية مصمَّمة خصيصًا للطباعة.
+   ========================================================= */
+function exportMonthPdf(key){
+  const moDef = MONTHS.find(m=>m.key===key);
+  const name = monthName(moDef);
+  const s = monthStats(key);
+  const mo = yearMonths()[key];
+  const genTime = new Date().toLocaleString(currentLang==='en'?'en-US':'ar-SA');
+
+  // تجميع العمليات حسب التصنيف (بدون إجمالي فرعي مدمج — سيكون في جدول منفصل)
+  const catCodes = Object.keys(s.byCategory).sort((a,b)=> a==='' ? 1 : b==='' ? -1 : a.localeCompare(b));
+  const entriesByCat = {};
+  mo.entries.forEach(e=>{
+    const code = e.category || '';
+    if(!entriesByCat[code]) entriesByCat[code] = [];
+    entriesByCat[code].push(e);
+  });
+  const groupedRowsHtml = catCodes.map(code=>
+    (entriesByCat[code]||[]).map(e=>`
+      <tr>
+        <td>${esc(e.invoice)}</td>
+        <td class="pr-num">${esc(e.date)}</td>
+        <td>${esc(e.details)}</td>
+        <td>${esc(categoryLabel(code))}</td>
+        <td class="pr-num">${fmt(e.amount)}</td>
+      </tr>
+    `).join('')
+  ).join('');
+
+  const catTotalsRowsHtml = catCodes.map(code=>`
+    <tr>
+      <td class="pr-num">${code || '—'}</td>
+      <td>${esc(categoryName(code))}</td>
+      <td class="pr-num">${fmt(s.byCategory[code])}</td>
+    </tr>
+  `).join('');
+
+  const reportTitle = currentLang==='en' ? `Expense Report — ${name} ${activeYear}` : `تقرير مصروفات — ${name} ${activeYear}`;
+  const generatedLabel = currentLang==='en' ? 'Generated on' : 'تاريخ الإصدار';
+  const preparedLabel = currentLang==='en' ? 'Prepared by' : 'المعدّ';
+  const approvedLabel = currentLang==='en' ? 'Approved by' : 'المعتمد';
+  const noDataLabel = currentLang==='en' ? 'No entries recorded for this month.' : 'لا توجد عمليات مسجَّلة لهذا الشهر.';
+  const printHintLabel = currentLang==='en'
+    ? 'Use your browser\'s Print (Ctrl/Cmd+P) and choose "Save as PDF" as the destination.'
+    : 'استخدم أمر الطباعة في متصفحك (Ctrl+P أو Cmd+P) واختر «حفظ كـ PDF» كوجهة.';
+
+  const reportBody = `
+    <div class="pr-header">
+      <img src="data:image/png;base64,${LOGO_B64}" alt="${esc(t('orgName'))}">
+      <div>
+        <div class="pr-org">${esc(t('orgName'))}</div>
+        <h1>${esc(reportTitle)}</h1>
+        <div class="pr-meta">${esc(generatedLabel)}: ${esc(genTime)}</div>
+      </div>
+    </div>
+
+    <div class="pr-stats">
+      <div class="pr-stat"><div class="pr-label">${esc(t('totalExpenses'))}</div><div class="pr-value">${fmt(s.total)}</div></div>
+      <div class="pr-stat"><div class="pr-label">${esc(t('entryCount'))}</div><div class="pr-value">${s.count}</div></div>
+    </div>
+
+    ${mo.entries.length ? `
+    <div class="pr-section-title">${esc(t('monthExpenseLog'))} ${esc(name)}</div>
+    <table class="pr-table">
+      <thead><tr>
+        <th>${esc(t('colInvoice'))}</th><th class="pr-num">${esc(t('colDate'))}</th><th>${esc(t('colDetails'))}</th><th>${esc(t('colCategory'))}</th><th class="pr-num">${esc(t('colAmount'))}</th>
+      </tr></thead>
+      <tbody>${groupedRowsHtml}</tbody>
+      <tfoot><tr><td colspan="4">${esc(t('total'))}</td><td class="pr-num">${fmt(s.total)}</td></tr></tfoot>
+    </table>` : `<div class="pr-section-title">${esc(t('monthExpenseLog'))} ${esc(name)}</div><p style="font-size:11px;color:#5C7069;">${esc(noDataLabel)}</p>`}
+
+    ${catCodes.length ? `
+    <div class="pr-section-title">${esc(t('categoryTotalsTitle'))}</div>
+    <table class="pr-table">
+      <thead><tr><th class="pr-num">${esc(t('categoryCode'))}</th><th>${esc(t('categoryName'))}</th><th class="pr-num">${esc(t('totalSpend'))}</th></tr></thead>
+      <tbody>${catTotalsRowsHtml}</tbody>
+    </table>` : ''}
+
+    <div class="pr-signatures">
+      <div class="pr-sign-line">${esc(preparedLabel)}: ______________________</div>
+      <div class="pr-sign-line">${esc(approvedLabel)}: ______________________</div>
+    </div>
+
+    <div class="pr-footer">${esc(t('orgName'))} — ${esc(currentLang==='en'?'Automatically generated report from the expense tracking system.':'تقرير مُنشأ تلقائيًا من نظام مصروفات الهيئة.')}</div>
+  `;
+
+  // نبني مستندًا مستقلاً بالكامل ونفتحه في تبويب جديد بدل استدعاء
+  // window.print() على الصفحة الحالية مباشرة — لأن إطار المعاينة المعزول
+  // الذي يعرض هذا التطبيق يحجب نافذة الطباعة تمامًا (بلا أي رسالة خطأ)،
+  // تمامًا كما كان يحجب confirm/alert سابقًا. تبويب منفصل حقيقي في المتصفح
+  // لا يخضع لهذا الحجب، ويمكن دائمًا طباعته أو حفظه كـ PDF يدويًا.
+  const fullHtml = `<!DOCTYPE html>
+<html lang="${currentLang==='en'?'en':'ar'}" dir="${currentLang==='en'?'ltr':'rtl'}">
+<head>
+<meta charset="UTF-8">
+<title>${esc(reportTitle)}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  body{font-family:'Cairo',sans-serif;margin:0;padding:24px;color:#0D2621;background:#fff;}
+  .pr-print-hint{
+    background:#DEF1EA;color:#045847;border:1px solid #0E9077;border-radius:8px;
+    padding:10px 14px;margin-bottom:18px;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:10px;
+  }
+  .pr-print-hint button{
+    background:#06755C;color:#fff;border:none;border-radius:6px;padding:8px 16px;
+    font-family:inherit;font-size:13px;cursor:pointer;flex:none;
+  }
+  .pr-header{display:flex;align-items:center;gap:14px;border-bottom:3px solid #06755C;padding-bottom:12px;margin-bottom:16px;}
+  .pr-header img{width:56px;height:56px;flex:none;}
+  .pr-header .pr-org{font-size:12px;color:#5C7069;font-weight:600;margin-bottom:3px;}
+  .pr-header h1{margin:0;font-size:21px;color:#06755C;}
+  .pr-header .pr-meta{font-size:12px;color:#5C7069;margin-top:3px;}
+  .pr-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;max-width:340px;}
+  .pr-stat{border:1px solid #D6E7E1;border-radius:6px;padding:8px 10px;}
+  .pr-stat .pr-label{font-size:11px;color:#5C7069;font-weight:700;margin-bottom:3px;}
+  .pr-stat .pr-value{font-size:17px;font-weight:800;color:#06755C;font-family:'IBM Plex Mono',monospace;}
+  .pr-section-title{font-size:14.5px;font-weight:800;color:#06755C;margin:18px 0 8px;border-inline-start:4px solid #06755C;padding-inline-start:8px;}
+  .pr-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px;border-radius:6px;overflow:hidden;box-shadow:0 1px 3px rgba(13,38,33,.08);}
+  .pr-table th{background:#06755C;color:#fff;padding:7px 6px;text-align:center;font-size:11.5px;font-weight:700;letter-spacing:.2px;}
+  .pr-table td{padding:6px 6px;border-bottom:1px solid #D6E7E1;text-align:center;vertical-align:middle;}
+  .pr-table tr:nth-child(even) td{background:#F1F8F5;}
+  .pr-table tfoot td{font-weight:800;border-top:2px solid #06755C;background:#fff;text-align:center;}
+  .pr-num{font-family:'IBM Plex Mono',monospace;text-align:center !important;direction:ltr;unicode-bidi:plaintext;}
+  .pr-footer{margin-top:24px;padding-top:10px;border-top:1px solid #D6E7E1;font-size:11px;color:#5C7069;}
+  .pr-signatures{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:34px;}
+  .pr-sign-line{border-top:1px solid #0D2621;padding-top:6px;font-size:12px;color:#5C7069;}
+  @media print{
+    .pr-print-hint{display:none;}
+    @page{ size:A4; margin:14mm; }
+    * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+  }
+</style>
+</head>
+<body>
+  <div class="pr-print-hint">
+    <span>${esc(printHintLabel)}</span>
+    <button onclick="window.print()">🖨️ ${currentLang==='en'?'Print / Save PDF':'طباعة / حفظ PDF'}</button>
+  </div>
+  ${reportBody}
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  if(!win){
+    uiAlert(currentLang==='en'
+      ? 'Could not open a new tab. Please allow pop-ups for this site in your browser, then try again.'
+      : 'تعذّر فتح تبويب جديد. اسمح بالنوافذ المنبثقة (Pop-ups) لهذا الموقع من إعدادات متصفحك، ثم حاول مجددًا.');
+    return;
+  }
+  win.document.open();
+  win.document.write(fullHtml);
+  win.document.close();
 }
 
 /* =========================================================
@@ -1957,20 +2349,38 @@ function renderSummary(){
     <div class="panel">
       <h2>${t('annualByEmployee')}</h2>
       <table class="emp-table">
-        <thead><tr><th>${t('employee')}</th><th>${t('annualSpent')}</th><th>${t('annualAdvance')}</th><th>${t('diffAdvSpend')}</th></tr></thead>
+        <thead><tr><th>${t('employee')}</th><th class="num">${t('annualSpent')}</th><th class="num">${t('annualAdvance')}</th><th class="num">${t('diffAdvSpend')}</th></tr></thead>
         <tbody>
           ${Object.keys(y.byEmployee).map(emp=>{
             const d = y.byEmployee[emp];
             const diff = d.advance - d.spent;
             return `<tr>
-              <td>${esc(emp)}</td>
-              <td class="num">${fmt(d.spent)}</td>
-              <td class="num">${fmt(d.advance)}</td>
-              <td class="num ${diff>=0?'diff-pos':'diff-neg'}">${fmt(diff)}</td>
+              <td data-label="${t('employee')}">${esc(emp)}</td>
+              <td class="num" data-label="${t('annualSpent')}">${fmt(d.spent)}</td>
+              <td class="num" data-label="${t('annualAdvance')}">${fmt(d.advance)}</td>
+              <td class="num ${diff>=0?'diff-pos':'diff-neg'}" data-label="${t('diffAdvSpend')}">${fmt(diff)}</td>
             </tr>`;
           }).join('')}
         </tbody>
       </table>
+    </div>
+
+    <div class="panel">
+      <h2>${t('categoryTotalsTitle')} — ${activeYear}</h2>
+      ${(()=>{
+        const codes = Object.keys(y.byCategory).sort((a,b)=> a==='' ? 1 : b==='' ? -1 : a.localeCompare(b));
+        if(!codes.length) return `<div class="empty-note">${t('emptyMonth')}</div>`;
+        return `<table class="emp-table">
+          <thead><tr><th class="num">${t('categoryCode')}</th><th>${t('categoryName')}</th><th class="num">${t('annualSpent')}</th></tr></thead>
+          <tbody>
+            ${codes.map(code=>`<tr>
+              <td class="num" data-label="${t('categoryCode')}">${code || '—'}</td>
+              <td data-label="${t('categoryName')}">${esc(categoryName(code))}</td>
+              <td class="num" data-label="${t('annualSpent')}">${fmt(y.byCategory[code])}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+      })()}
     </div>
   `;
   renderShell(html);
@@ -1989,40 +2399,43 @@ function renderMonth(key){
 
   const rowsHtml = mo.entries.map((e,i)=>`
     <tr data-id="${e.id}">
-      <td class="col-num">${i+1}</td>
-      <td class="col-status">
+      <td class="col-num" data-label="${t('colNum')}">${i+1}</td>
+      <td class="col-status" data-label="${t('colStatus')}">
         <button class="badge ${e.status==='سددت'?'paid':'unpaid'}" data-act="toggle-status">${e.status==='سددت'?t('statusPaid'):t('statusUnpaid')}</button>
       </td>
-      <td class="col-date"><input class="cell-input" type="date" data-field="date" value="${esc(e.date)}"></td>
-      <td><input class="cell-input" type="text" data-field="invoice" value="${esc(e.invoice)}" placeholder="${t('colInvoice')}"></td>
-      <td><input class="cell-input" type="text" data-field="vendor" value="${esc(e.vendor)}" placeholder="${t('colVendor')}"></td>
-      <td><input class="cell-input" type="text" data-field="details" value="${esc(e.details)}" placeholder="${t('colDetails')}"></td>
-      <td class="col-amount"><input class="cell-input" type="number" step="0.01" data-field="amount" value="${e.amount}"></td>
-      <td>
+      <td class="col-date" data-label="${t('colDate')}"><input class="cell-input" type="date" data-field="date" value="${esc(e.date)}"></td>
+      <td data-label="${t('colInvoice')}"><input class="cell-input" type="text" data-field="invoice" value="${esc(e.invoice)}" placeholder="${t('colInvoice')}" title="${esc(e.invoice)}"></td>
+      <td data-label="${t('colVendor')}"><input class="cell-input" type="text" data-field="vendor" value="${esc(e.vendor)}" placeholder="${t('colVendor')}" title="${esc(e.vendor)}"></td>
+      <td data-label="${t('colDetails')}"><textarea class="cell-input auto-grow" data-field="details" placeholder="${t('colDetails')}" title="${esc(e.details)}" rows="1">${esc(e.details)}</textarea></td>
+      <td class="col-amount" data-label="${t('colAmount')}"><input class="cell-input" type="number" step="0.01" data-field="amount" value="${e.amount}"></td>
+      <td data-label="${t('colEmployee')}">
         <select class="cell-input" data-field="employee">
           ${state.employees.map(emp=>`<option value="${esc(emp)}" ${emp===e.employee?'selected':''}>${esc(emp)}</option>`).join('')}
         </select>
       </td>
-      <td><input class="cell-input" type="text" data-field="notes" value="${esc(e.notes)}" placeholder="—"></td>
-      <td class="col-receipt">
+      <td data-label="${t('colCategory')}">
+        <select class="cell-input" data-field="category" style="min-width:120px;">
+          <option value="" ${!e.category?'selected':''}>${t('uncategorized')}</option>
+          ${(state.categories||[]).map(c=>`<option value="${esc(c.code)}" ${c.code===e.category?'selected':''}>${esc(categoryLabel(c.code))}</option>`).join('')}
+        </select>
+      </td>
+      <td data-label="${t('colNotes')}"><input class="cell-input" type="text" data-field="notes" value="${esc(e.notes)}" placeholder="—" title="${esc(e.notes)}"></td>
+      <td class="col-receipt" data-label="${t('colReceipt')}">
         <button class="receipt-btn ${e.hasReceipt?'has-file':''}" data-act="receipt" title="${e.hasReceipt?(currentLang==='en'?'View invoice image':'عرض صورة الفاتورة'):(currentLang==='en'?'Attach / scan invoice':'إرفاق / تصوير الفاتورة')}">${e.hasReceipt?'🧾':'📎'}</button>
         <input type="file" accept="image/*" data-file-for="${e.id}" style="display:none;">
         <input type="file" accept="image/*" capture="environment" data-camera-for="${e.id}" style="display:none;">
       </td>
-      <td class="row-actions">${isAdmin() ? `<button class="icon-btn" data-act="delete" title="${currentLang==='en'?'Delete row':'حذف الصف'}">✕</button>` : ''}</td>
+      <td class="row-actions" data-label="">${isAdmin() ? `<button class="icon-btn" data-act="delete" title="${currentLang==='en'?'Delete row':'حذف الصف'}">✕</button>` : ''}</td>
     </tr>
   `).join('');
 
-  const empRows = Object.keys(s.byEmployee).map(emp=>{
-    const adv = (mo.advances && mo.advances[emp]) || 0;
-    const carryIn = employeeCarryIn(emp, key);
-    const diff = (adv + carryIn) - s.byEmployee[emp];
+  const empRows = employeeMonthBreakdown(key).map(({emp,spent,advance,carryIn,diff})=>{
     return `<tr>
-      <td>${esc(emp)}</td>
-      <td class="num">${fmt(s.byEmployee[emp])}</td>
-      <td><input class="cell-input num" type="number" step="0.01" data-adv-emp="${esc(emp)}" value="${adv}" style="text-align:left;direction:ltr;background:#EAF6F0;border:1px solid var(--gold-soft);border-radius:5px;"></td>
-      <td class="num ${carryIn>=0?'diff-pos':'diff-neg'}">${fmt(carryIn)}</td>
-      <td class="num ${diff>=0?'diff-pos':'diff-neg'}" style="font-weight:800;">${fmt(diff)}</td>
+      <td data-label="${t('employee')}">${esc(emp)}</td>
+      <td class="num" data-label="${t('totalSpend')}">${fmt(spent)}</td>
+      <td data-label="${t('advanceThisMonth')}"><input class="cell-input num" type="number" step="0.01" data-adv-emp="${esc(emp)}" value="${advance}" style="text-align:left;direction:ltr;background:#EAF6F0;border:1px solid var(--gold-soft);border-radius:5px;"></td>
+      <td class="num ${carryIn>=0?'diff-pos':'diff-neg'}" data-label="${t('carriedOver')}">${fmt(carryIn)}</td>
+      <td class="num ${diff>=0?'diff-pos':'diff-neg'}" style="font-weight:800;" data-label="${t('finalBalance')}">${fmt(diff)}</td>
     </tr>`;
   }).join('');
 
@@ -2038,18 +2451,19 @@ function renderMonth(key){
       <h2>${t('monthExpenseLog')} ${monthName(moDef)}
         <span>
           <button class="ghost sm" id="btnCsv">${t('exportCsv')}</button>
+          <button class="ghost sm" id="btnPdf">${t('exportPdf')}</button>
         </span>
       </h2>
       ${mo.entries.length ? `
-      <div style="overflow-x:auto;">
+      <div class="table-scroll">
       <table>
         <thead><tr>
-          <th class="col-num">${t('colNum')}</th><th class="col-status">${t('colStatus')}</th><th class="col-date">${t('colDate')}</th>
-          <th>${t('colInvoice')}</th><th>${t('colVendor')}</th><th>${t('colDetails')}</th><th class="col-amount">${t('colAmount')}</th>
-          <th>${t('colEmployee')}</th><th>${t('colNotes')}</th><th class="col-receipt">${t('colReceipt')}</th><th></th>
+          <th class="col-num">${t('colNum')}</th><th class="col-status">${t('colStatus')}</th><th class="col-date num">${t('colDate')}</th>
+          <th>${t('colInvoice')}</th><th>${t('colVendor')}</th><th>${t('colDetails')}</th><th class="col-amount num">${t('colAmount')}</th>
+          <th>${t('colEmployee')}</th><th>${t('colCategory')}</th><th>${t('colNotes')}</th><th class="col-receipt">${t('colReceipt')}</th><th></th>
         </tr></thead>
         <tbody id="rowsBody">${rowsHtml}</tbody>
-        <tfoot><tr><td colspan="6">${t('total')}</td><td class="num">${fmt(s.total)}</td><td colspan="4"></td></tr></tfoot>
+        <tfoot><tr><td colspan="6">${t('total')}</td><td class="num">${fmt(s.total)}</td><td colspan="5"></td></tr></tfoot>
       </table>
       </div>` : `<div class="empty-note">${t('emptyMonth')}</div>`}
       <div class="add-row-bar"><button class="primary" id="btnAddRow">${t('addEntry')}</button></div>
@@ -2058,9 +2472,27 @@ function renderMonth(key){
     <div class="panel">
       <h2>${t('empSummaryTitle')} <span class="hint">${t('empSummaryHint')}</span></h2>
       <table class="emp-table">
-        <thead><tr><th>${t('employee')}</th><th>${t('totalSpend')}</th><th>${t('advanceThisMonth')}</th><th>${t('carriedOver')}</th><th>${t('finalBalance')}</th></tr></thead>
+        <thead><tr><th>${t('employee')}</th><th class="num">${t('totalSpend')}</th><th class="num">${t('advanceThisMonth')}</th><th class="num">${t('carriedOver')}</th><th class="num">${t('finalBalance')}</th></tr></thead>
         <tbody>${empRows}</tbody>
       </table>
+    </div>
+
+    <div class="panel">
+      <h2>${t('categoryTotalsTitle')} — ${monthName(moDef)}</h2>
+      ${(()=>{
+        const codes = Object.keys(s.byCategory).sort((a,b)=> a==='' ? 1 : b==='' ? -1 : a.localeCompare(b));
+        if(!codes.length) return `<div class="empty-note">${t('emptyMonth')}</div>`;
+        return `<table class="emp-table">
+          <thead><tr><th class="num">${t('categoryCode')}</th><th>${t('categoryName')}</th><th class="num">${t('totalSpend')}</th></tr></thead>
+          <tbody>
+            ${codes.map(code=>`<tr>
+              <td class="num" data-label="${t('categoryCode')}">${code || '—'}</td>
+              <td data-label="${t('categoryName')}">${esc(categoryName(code))}</td>
+              <td class="num" data-label="${t('totalSpend')}">${fmt(s.byCategory[code])}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+      })()}
     </div>
   `;
 
@@ -2073,25 +2505,31 @@ function renderMonth(key){
     });
   };
   document.getElementById('btnCsv').onclick = ()=> exportMonthCsv(key);
+  document.getElementById('btnPdf').onclick = ()=> exportMonthPdf(key);
 
   document.querySelectorAll('#rowsBody tr').forEach(tr=>{
     const id = tr.dataset.id;
     tr.querySelectorAll('[data-field]').forEach(input=>{
       const field = input.dataset.field;
-      const isTypedField = input.tagName === 'INPUT' && (input.type==='text' || input.type==='number');
+      const isTypedField = (input.tagName === 'INPUT' && (input.type==='text' || input.type==='number')) || input.tagName === 'TEXTAREA';
       if(isTypedField){
         // أثناء الكتابة: نحدّث البيانات فورًا في الذاكرة بصمت (بلا إعادة رسم
         // ولا حفظ لكل ضغطة) حتى لا يفقد الحقل التركيز ولا يُرسل حفظ متكرر
         // مزعج على كل حرف. الحفظ الفعلي وإعادة الرسم يحدثان عند مغادرة
         // الحقل (blur) أو بعد توقف قصير عن الكتابة.
+        if(input.tagName === 'TEXTAREA') autoGrowTextarea(input);
         input.addEventListener('input', ()=>{
           const entry = yearMonths()[key].entries.find(e=>e.id===id);
           if(!entry) return;
           entry[field] = field==='amount' ? (parseFloat(input.value)||0) : input.value;
+          if(field!=='amount') input.title = input.value;
+          if(input.tagName === 'TEXTAREA') autoGrowTextarea(input);
           scheduleSilentSave();
         });
         input.addEventListener('blur', ()=>{ commitEditsNow(); });
-        input.addEventListener('keydown', e=>{ if(e.key==='Enter') input.blur(); });
+        input.addEventListener('keydown', e=>{
+          if(e.key==='Enter'){ e.preventDefault(); input.blur(); }
+        });
       } else {
         const evt = (input.tagName==='SELECT' || input.type==='date') ? 'change' : 'input';
         input.addEventListener(evt, ()=>{
